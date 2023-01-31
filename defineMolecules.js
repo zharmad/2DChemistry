@@ -47,7 +47,7 @@ class MoleculeLibrary {
         if ( undefined === offsets ) { throw "Not all arguments are present for add_entry() !"; }
         let n = atoms.length;
         if ( n != offsets.length ) { throw "The length of atoms and offset arrys are not the same!"; }        
-        //Overwrite existing entries.
+        // Overwrite existing entries.
         if ( this.data[name] != undefined ) { delete this.data[name]; }        
         this.data[name] = { n, name, atoms, offsets };
         this.convert_offsets(name);
@@ -61,7 +61,7 @@ class MoleculeLibrary {
                 d.offsets[i] = new Vector2D( d.offsets[i][0], d.offsets[i][1] );                
             }
         }        
-    }
+    }      
     
     //Compute derivative molecular properties that will be used by each molecule.
     compute_derivative_properties(molName) {        
@@ -122,49 +122,111 @@ class MoleculeLibrary {
         return this.create_molecule( moltype, args );
     }
     
+    duplicate_molecule( mol ) {
+        const molNew = this.create_molecule_by_name( mol.name, { p: mol.p, v: mol.v, th: mol.th, om: mol.om } );
+        return molNew;
+    }   
+    
+    // Meant to be an internal check
+    check_com( molName ) {
+        const e = this.data[molName];
+        var m = undefined;
+        const pCOM = new Vector2D( 0.0, 0.0 );
+        for ( let i = 0; i < e.n; i++ ) {
+            m = this.tableOfElements.get_by_name( e.atoms[i] ).mass;
+            pCOM.sincr( m, e.offsets[i] );
+        }
+        pCOM.scale( 1.0 / e.mass );
+        console.log( `Computed center of mass: ${pCOM.x} , ${pCOM.y}` );
+    }
+    
     add_all_known_molecule_types() {
-        this.add_entry( 'He', ['He'], [[0,0]] );
-        this.add_entry( 'Ne', ['Ne'], [[0,0]] );
-        this.add_entry( 'Ar', ['Ar'], [[0,0]] );
-        this.add_entry( 'Kr', ['Kr'], [[0,0]] );
-        this.add_entry( 'Xe', ['Xe'], [[0,0]] );        
-        this.add_entry( 'H₂', ['H','H'], [[32,0],[-32,0]] );
-        this.add_entry( 'N₂', ['N','N'], [[71,0],[-71,0]] );
-        this.add_entry( 'O₂', ['O','O'], [[66,0],[-66,0]] );
-        this.add_entry( 'Cl₂', ['Cl','Cl'], [[102,0],[-102,0]] );
-        this.add_entry( 'H₂O', ['H','H','O'], [[-52,76],[-52,-76],[7,0]] );
-        this.set_molecule_colour('H₂O','#AFE4DE');
-        this.add_entry( 'CO₂', ['O','O','C'], [[116,0],[-116,0],[0,0]] );
+        /*
+            Geometries are drawn from experimental geometries of the NIST database at https://cccbdb.nist.gov/introx.asp
+            All geometries are of the ground state. 3D molecules will, of course, be flattened.
+        */
+        
+        // Basic molecules that populate the atmosphere
+        this.add_entry( "He", ["He"], [ [0.0,0.0] ] );
+        this.add_entry( "Ne", ["Ne"], [ [0.0,0.0] ] );
+        this.add_entry( "Ar", ["Ar"], [ [0.0,0.0] ] );
+        this.add_entry( "Kr", ["Kr"], [ [0.0,0.0] ] );
+        this.add_entry( "Xe", ["Xe"], [ [0.0,0.0] ] );
+        this.add_entry( "H₂", ["H","H"], [ [37.1,0.0],[-37.1,0.0] ] );
+        this.add_entry( "N₂", ["N","N"], [ [54.9,0.0],[-54.9,0.0] ] );
+        this.add_entry( "O₂", ["O","O"], [ [60.4,0.0],[-60.4,0.0] ] );
+        this.add_entry( "H₂O", ["H","H","O"], [ [-52.0,75.7],[-52.0,-75.7],[6.6,0.0] ] );        
+        this.set_molecule_colour("H₂O","#AFE4DE");        
+        this.add_entry( "CH₄", ["H","H","H","H","C"], [ [108.7,0.0],[0.0,108.7],[-108.7,0.0],[0.0,-108.7],[0.0,0.0] ] );
+        this.add_entry( "CO₂", ["O","O","C"], [ [116.2,0.0],[-116.2,0.0],[0.0,0.0] ] );
+        this.add_entry( "CO", ["O","C"], [ [48.4,0.0],[-64.4,0.0] ] );
+        this.add_entry( "NH₃", ["H","H","H","N"], [ [101.2,0.0],[-50.6,87.6],[-50.6,-87.6],[0.0,0.0] ] );
+        this.add_entry( "Cl₂", ["Cl","Cl"], [ [99.4,0.0],[-99.4,0.0] ] );
+        
+        //Nitrogen dioxide equilibrium.
+        this.add_entry( "NO₂", ["O","O","N"], [[14.2,109.9],[14.2,-109.9],[-32.3,0.0]] );
+        this.set_molecule_colour("NO₂", "brown");
+        this.add_entry( "N₂O₄", ["O","O","N","O","O","N"], [[134.3,110.1],[134.3,-110.1],[89.1,0.0],[-134.3,110.1],[-134.3,-110.1],[-89.1,0.0]] );
+        this.set_molecule_colour("N₂O₄", "white");
 
-        //Nitrogen dioxide equilibrium. Borrow data from https://techiescientist.com/n2o4-lewis-structure/
-        this.add_entry( 'NO₂', ['O','O','N'], [[14,110],[14,-110],[-32,0]] );
-        this.set_molecule_colour('NO₂', 'brown');
-        this.add_entry( 'N₂O₄', ['O','O','N','O','O','N'], [[134,112],[134,-112],[88,0],[-134,112],[-134,-112],[-88,0]] );
-        this.set_molecule_colour('N₂O₄', 'white');
+        //Hydrogen iodide equilibrium.
+        this.add_entry( "I₂", ["I","I"], [ [133.3,0.0],[-133.3,0.0] ] );
+        this.add_entry( "HI", ["H","I"], [ [159.6,0.0],[-1.3,0.0] ] );
+        this.set_molecule_colour("HI", "rgb(240,200,255)"); //HI colour
+        this.add_entry( "I•", ["I"], [[0.0,0.0]] );
+        this.set_molecule_colour("I•", "rgb(64,32,80)"); //Radical colour
 
         //Hydrogen-oxygen combustion.
-        this.add_entry( 'H•', ['H'], [[0,0]] );
-        this.set_molecule_colour('H•', '#fbec5d'); //Maize yellow.
-        this.add_entry( 'OH•', ['O','H'], [[0,6],[0,-91]] );
-        this.add_entry( 'H₂O₂', ['H','H','O','O'], [[94,82],[-94,-82],[0,74],[0,-74]] );
-        
-        //Ozone layer equilibria. https://en.wikipedia.org/wiki/Ozone_layer
-        this.add_entry( 'O•', ['O'], [[0,0]] );
-        this.set_molecule_colour('O•', 'DarkRed');
-        this.add_entry( 'O₃', ['O','O','O'], [[22,109],[22,-109],[-45,0]] );
-        this.set_molecule_colour('O₃', 'LightCyan');
-        this.add_entry( 'NO', ['O','N'], [[54,0],[-61,0]] );        
-        // nitrate radical bond length is 124 pm, according to Wayne et al., 1991. DOI: 10.1016/0960-1686(91)90192-A
-        this.add_entry( 'NO₃•', ['O','O','O','N'], [[21,107],[21,-107],[-41,0],[0,0]] );
-        // Three reactions. O2 + hv -> 2O ; O + O2 <-> O3 ; O + O3 -> 2O2
-        //this.add_entry( 'N₂O₅', ['O','O','N','O','N','O','O'], [ ] );
-        //console.log( this.data['CO₂']);
+        this.add_entry( "H•", ["H"], [[0.0,0.0]] );
+        this.set_molecule_colour("H•", "#fbec5d"); //Maize yellow.
+        this.add_entry( "OH•", ["O","H"], [[5.8,0.0],[-91.2,0.0]] );
+        this.add_entry( "O•", ["O"], [[0.0,0.0]] );
+        this.set_molecule_colour("O•", "rgb(127,0,0)");
+        this.add_entry( "H₂O₂", ["H","H","O","O"], [[81.7,94.7],[-81.7,-94.7],[73.8,0.0],[-73.8,0.0]] );
+        this.add_entry( "HO₂•", ["H","O","O"], [[-87.9,-91.1],[-63.9,2.9],[69.4,2.9]] );        
 
-        // Hydrogen sulfide oxidation and direct thermal decomposition
-        // Important step to eliminate sulfur impurities in fuel and biofuel sources.
-        // See, e.g.: 
-        // th
+        // Methane-ethane combustion
+        this.add_entry( "C₂H₆", ["H","H","H","H","H","H","C","C"],
+                                [[76.8,109.1],[185.9,0.0],[76.8,-109.1],[-76.8,-109.1],[-185.9,0.0],[-76.8,109.1],
+                                [76.8,0.0],[-76.8,0.0]] );
+        this.add_entry( "C₂H₄", ["H","H","H","H","C","C"],[[123.2,92.9],[123.2,-92.9],[-123.2,-92.9],[-123.2,92.9],[67.0,0.0],[-67.0,0.0]] );
+        this.add_entry( "C₂H₂", ["H","H","C","C"], [[166.4,0.0],[-166.4,0.0],[60.1,0.0],[-60.1,0.0]] );
+        this.add_entry( "CH₃•", ["H","H","H","C"], [[107.9,0.0],[-54.0,93.4],[-54.0,-93.4],[0.0,0.0]] );
+        // Methanol
+        this.add_entry( "CH₃OH", ["H","H","H","H","O","C"], [[-73.3,-112.4],[-182.9,-2.8],[-73.3,106.8],[100.3,87.7],[69.4,-2.8],[-73.3,-2.8]] );
+        // Formaldehyde, not hydroxycarbene.
+        this.add_entry( "CH₂O", ["H","H","O","C"], [[-119.0,94.3],[-119.0,-94.3],[60.2,0.0],[-60.3,0.0]] );
+        // Ketene.
+        this.add_entry( "CH₂CO", ["H","H","O","C","C"], [[-181.4,-94.5],[-181.4,94.5],[118.2,0.0],[-129.3,0.0],[2.2,0.0]] );
+        
+        //Ozone layer equilibrium. https://en.wikipedia.org/wiki/Ozone_layer
+        this.add_entry( "O₃", ["O","O","O"], [[22.3,108.9],[22.3,-108.9],[-44.7,0]] );
+        this.set_molecule_colour("O₃", "rgb(255,127,127)");
+        this.add_entry( "NO", ["O","N"], [[53.9,0.0],[-61.5,0.0]] );
+        this.add_entry( "NO₃•", ["O","O","O","N"], [[61.9,107.2],[61.9,-107.2],[-123.8,0.0],[0,0.0]] );
+        // Three reactions. O2 + hv -> 2O ; O + O2 <-> O3 ; O + O3 -> 2O2
+        //this.add_entry( "N₂O₅", ["O","O","N","O","N","O","O"], [ ] );
+        //console.log( this.data["CO₂"]);
+
+        /*
+            Hydrogen sulfide oxidation and direct thermal decomposition. 
+            This is an important first step to eliminate sulfur impurities in fuel and biofuel sources.
+            The first step is at highh temperature, but equilibrium dictates that significant H2S remains. Thus, a second step is used at a lower temperature with a surface catalyst to push equilibrum towards completion.
+            See, e.g.:
+                1.  Barba et al. (2017), DOI: 10.1016/j.fuel.2016.12.038
+                2.  Cong et al. (2016), DOI: 10.1016/j.ijhydene.2016.03.053
+            These two provide detailed reaction pathways of intermediates with and without use of oxygen.
+        */
         // this.add_entry('H₂S', ['H','H','S']);
+        // this.add_entry('HS', ['H','S']);
+        // this.add_entry('HS₂', ['H','S','S']);
+        // this.add_entry('H₂S₂', ['H','H','S','S']);
+        // this.add_entry('SO', ['S','O']);
+        // this.add_entry('SO₂', ['S','O','O']);
+        // this.add_entry('S₂O', ['S','S','O','O']);
+        // this.add_entry( 'HO₂', ['H','O','O'], [[94,82],[-94,-82],[0,74],[0,-74]] );
+        // this.add_entry('S', ['S']);
+        // this.add_entry('S₂', ['S','S']);
     }
 }
 

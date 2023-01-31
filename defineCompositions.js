@@ -67,9 +67,11 @@ class GasComposition {
     
     add_components_via_array(arrIDs, arrRatios) {
         const n = arrIDs.length;
-        if ( n != arrRatios.length ) {throw "ERROR: The two input arrays to add_components_via_array() do not have the same length!"; }
+        //if ( n == undefined arrRatios.length ) {throw "ERROR: The  arrays to add_components_via_array() do not have the same length!"; }
+        var temp = undefined;
         for ( let i = 0; i < n; i++ ) {
-            this.add_component( arrIDs[i], arrRatios[i] );
+            temp = (arrRatios[i] != undefined) ? arrRatios[i] : 0.0;
+            this.add_component( arrIDs[i], temp );
         }
     }
 
@@ -130,62 +132,4 @@ class GasComposition {
         // TODO
         return arr
     }
-}
-
-// Interface functions with overall program. 
-// This one is about presets
-function get_new_preset_gas_composition( type, args ) {
-    if ( undefined === type ) { type = 'custom'; }
-    if ( undefined === args ) { args = {}; }
-    let gc = undefined;
-    switch( type ) {
-        // case 'demo':
-            // let gc = new GasComposition('count');
-            // gc.add_component( "He", 80 );
-            // break;
-        case 'noble gas':
-            gc = new GasComposition('ratio');            
-            gc.add_component( "He", 16 );
-            gc.add_component( "Ne",  8 );
-            gc.add_component( "Ar",  4 );
-            gc.add_component( "Kr",  2 );
-            gc.add_component( "Xe",  1 );            
-            gc.normalise();
-            break;
-        case 'atmosphere':
-            gc = new GasComposition('ratio');    
-            gc.add_component( "N₂",  0.78 );
-            gc.add_component( "O₂",  0.21 );
-            gc.add_component( "Ar",  0.01 );
-            gc.add_component( "H₂O", 0.02 );
-            //gc.add_component( "CO₂", 0.0005 ); // 500ppm
-            gc.normalise();          
-            //if ( undefined === args["numTotal"] ) { args["numTotal"] = 200; }
-            //gc.convert_ratio_to_count( args["numTotal"] );
-            break;
-        case 'nitrogen dioxide':
-            gc = new GasComposition('ratio');
-            gc.add_component( "NO₂",  0.8 );
-            gc.add_component( "N₂O₄", 0.2 );
-            break;
-        case 'combustion - H2 and O2':
-            gc = new GasComposition('ratio');
-            gc.add_component( "H₂",  0.6 );
-            gc.add_component( "O₂", 0.4 );
-            gc.add_component( "H₂O", 0.0);
-            gc.add_component( "O•", 0.0);
-            gc.add_component( "H•", 0.0);
-            gc.add_component( "OH•", 0.0);
-            break;        
-        case 'custom':
-            gc = new GasComposition('count');
-            if ( undefined === args["components"] ) { args["components"] = {}; }            
-            Object.entries(args["components"]).forEach( ([name,v]) => {
-                gc.add_component( name, v );
-            });
-            break;
-        default:
-            throw `Unrecognised gas composition preset ${type}!`;
-    }
-    return gc;
 }

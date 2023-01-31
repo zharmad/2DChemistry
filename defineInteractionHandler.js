@@ -1,9 +1,14 @@
 /*
-    This class handles a defined set of reactions between molecules.
+    This class handles how to treat reactions between molecules.
     = = = =
     It is invoked with an array containing the list of molecules to be characterised.
+    Two object dictionaries are set up:
+    - dictSelf[mol] to describe all enabled self-reactions for the molecule, and
+    - dict[mol1][mol2] to describe all enabled collision reactions between two molecules.
+    
+    Three body collisions are not considered in this model. 
 
-    When a reaction check is considered successful, this handler returns the product molecules and their geometries for the simulation to then directly incorporate. This handler does not get to remove the rectants.
+    When a reaction check is considered successful, this handler returns the product molecules and their geometries for the simulation to then directly incorporate. This handler does not get to directly modify simulation object contents.
     
     This handler computes the velocities so as to try to preserve total kinetic and rotational energy.
 
@@ -18,9 +23,12 @@ class InteractionHandler {
             this.initialise_species( args.species );
         } else {
             this.species = [];            
-            this.dict = {};
-            this.dictSelf = {};
+            this.dict = {}; // dictionary to an array of evaluation functions of the appropriate reaction.
+            this.dictSelf = {}; // dictionary to an array of evaluation functions of the appropriate reaction.
         }
+        
+        this.reactions = []; // List of all reactions
+        
         //this.initialise( args.species );
         this.moleculeLibrary = args.moleculeLibrary;
         console.log("Gas interaction handler initialised.");
@@ -28,19 +36,21 @@ class InteractionHandler {
 
     set_molecule_library( ml ) { this.moleculeLibrary = ml; }
     
-    // Create a bidirectional dictionary so that both orders point to the same object.
+    // Initialise dictionaries with empty arrays so as to enable multiple redundant entries.
+    // This will be required for more complex geometries.
+    // The dictionary is bidirection, such that species in the reverse order will resolve to the same reaction object.
     initialise_species(arrNames) {
-        console.log(arrNames);
+        console.log(`Initialising with molecules composition: ${arrNames}`);
         this.species = arrNames;
         this.dict = {};
         this.dictSelf = {};        
         arrNames.forEach( m => {
-            this.dict[m] = {}
-            this.dictSelf[m] = undefined;
+            this.dict[m] = {};
+            this.dictSelf[m] = [];
         });
         arrNames.forEach( m1 => {
             arrNames.forEach( m2 => {
-                this.dict[m1][m2] = this.dict[m2][m1] = undefined;
+                this.dict[m2][m1] = this.dict[m1][m2] = [];
             });
         });
     }
@@ -49,12 +59,12 @@ class InteractionHandler {
         console.log(this);
         this.species.forEach( name => {
             console.log( `= = Defined molecule species: ${name}` );            
-            if ( undefined != this.dictSelf[name] ) {
+            if ( this.dictSelf[name].length > 0 ) {
                 console.log( `...Self reaction entry for ${name}:` );
                 this.dictSelf[name].debug();
             }
             for ( const k in this.dict[name] ) {
-                if ( undefined != this.dict[k][name] ) {
+                if ( this.dict[k][name].length > 0 ) {
                     console.log( `...Collision entry between ${name} and ${k}` );
                     this.dict[k][name].debug();
                 }
@@ -65,7 +75,11 @@ class InteractionHandler {
     //Only self reactions have time dependence. Collision reactions are instant!
     update_time_dependence( dt ) {
         for ( const key in this.dictSelf ) {
-            if ( undefined != this.dictSelf[key] ) { this.dictSelf[key].update_time_dependence( dt ); }
+            var reactions = this.dictSelf[key];
+            //console.log( reactions );            
+            if ( reactions.length > 0 ) {
+                reactions.forEach( r => r.update_time_dependence( dt ) );
+            }
         }
     }
     
@@ -113,6 +127,7 @@ class InteractionHandler {
             nAtomsProd.push( args.products[i].n );
         }
         //Complete determination of the type of reaction class to invoke.        
+        var objReaction = undefined;
         switch ( nReactants ) {
             case 2:
                 //Combination or general collision.
@@ -120,24 +135,29 @@ class InteractionHandler {
                     case 2:
                         // Classic two on two collision reaction.
                         if ( bDoForward ) {
-                            this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ] = new reactionTransfer( args );
-                            this.dict[ args.reactantNames[1] ][ args.reactantNames[0] ] = this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ];
+                            objReaction = new reactionTransfer( args );
+                            this.reactions.push( objReaction );
+                            this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ].push( objReaction );
                         }
                         if ( bDoReverse ) {
                             this.swap_reactant_and_products( args );
-                            this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ] = new reactionTransfer( args );
-                            this.dict[ args.reactantNames[1] ][ args.reactantNames[0] ] = this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ];
+                            objReaction = new reactionTransfer( args );
+                            this.reactions.push( objReaction );
+                            this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ].push( objReaction );
                         }
                         break;
                     case 1:
                         //Combination reaction.
                         if ( bDoForward ) {
-                            this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ] = new reactionCombination( args );
-                            this.dict[ args.reactantNames[1] ][ args.reactantNames[0] ] = this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ];
+                            objReaction = new reactionCombination( args );
+                            this.reactions.push( objReaction );
+                            this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ].push( objReaction );
                         }
                         if ( bDoReverse ) {
                             this.swap_reactant_and_products( args );
-                            this.dictSelf[ args.reactantNames[0] ] = new reactionDecomposition( args );
+                            objReaction = new reactionDecomposition( args );
+                            this.reactions.push( objReaction );                            
+                            this.dictSelf[ args.reactantNames[0] ].push( objReaction );
                         }
                         return;
                         break;
@@ -151,12 +171,15 @@ class InteractionHandler {
                     case 2:
                         // Decomposition reaction.                       
                         if ( bDoForward ) {
-                            this.dictSelf[ args.reactantNames[0] ] = new reactionDecomposition( args );                                
+                            objReaction = new reactionDecomposition( args );
+                            this.reactions.push( objReaction );                            
+                            this.dictSelf[ args.reactantNames[0] ].push( objReaction ) ;
                         }
                         if ( bDoReverse ) {
                             this.swap_reactant_and_products( args );
-                            this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ] = new reactionCombination( args );
-                            this.dict[ args.reactantNames[1] ][ args.reactantNames[0] ] = this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ];
+                            objReaction = new reactionCombination( args );
+                            this.reactions.push( objReaction );
+                            this.dict[ args.reactantNames[0] ][ args.reactantNames[1] ].push( objReaction );
                         }
                         return;
                         break;
@@ -190,7 +213,6 @@ class InteractionHandler {
         temp = args.reactants;
         args.reactants = args.products;        
         args.products  = temp;
-
         
         temp = args.reactantNames;
         args.reactantNames  = args.productNames;
@@ -208,19 +230,29 @@ class InteractionHandler {
         args.DeltaH *= -1;
     }        
     
-    remove_reaction( m1, m2 ) {
-        delete this.dict[m1][m2];
-        delete this.dict[m2][m1];
-        //this.nEntries--;
-    }
+    // remove_reaction( m1, m2 ) {
+        // delete this.dict[m1][m2];
+        // delete this.dict[m2][m1];
+    // }
         
     // Entry point from Simulation object for all unimolecular processes.
+    
     // Triggered for every molecule.
     // Return either null or an array containing new molecules.
     process_molecule_selfinteraction( mol ) {
-        if ( undefined === this.dictSelf[mol.name] ) { return null; }
+        const nReact = this.dictSelf[mol.name].length;
+        if ( nReact == 0 ) { return null; }
         //return entry.process_reaction( { mol } );
-        return this.dictSelf[mol.name].process_reaction( new molSystem( [mol] ) );
+        //return this.dictSelf[mol.name].process_reaction( new molSystem( [mol] ) );
+        const sys = new molSystem( [mol] );
+        var ret = null;
+        for ( let i = 0; i < nReact; i++ ) {
+            ret = this.dictSelf[mol.name][i].process_reaction( sys );
+            if ( null != ret ) {
+                return ret;
+            }
+        }
+        return null;
     }
 
     // Entry point from Simulation object for all bimolecular interactions.
@@ -229,6 +261,7 @@ class InteractionHandler {
     process_molecule_encounter( mol1, mol2 ) {
         //Container for variables to be pased between different functions.
         const obj = new molSystem( [mol1, mol2] );
+        
         //First confirm whether a collision will occur.        
         const bCollide = obj.confirm_molecule_collision();
         if ( false === bCollide ) { return null; }
@@ -236,28 +269,37 @@ class InteractionHandler {
         // Collision has definitely occurred. May want to shift molecules backwards and obtain more accurate contact point. THis is important for some edge cases.
         
         // Check whether there is a possiblity of reaction.
-        let entry = this.dict[mol1.name][mol2.name];
-        //if ( undefined === entry ) {throw `The names ${mol1.name} & ${mol2.name} are not part of the defined dictionary!`; }
-
+        let arrEntries = this.dict[mol1.name][mol2.name];
+        const nEntries = arrEntries.length;
         // Elastic collision exit point for molecules that has no possibility of reaction.        
-        if ( undefined === entry ) {
+        if ( nEntries == 0 ) {
             obj.resolve_collision();
             //console.log(`Collision between ${mol1.name} & ${mol2.name}, no possible reaction.`);
             return null;
         }
         
         // Determine if a reaction might occur due to this simple collision.
-        // NB: All angle and energy checks should be specific to the reaction and handled within the object.        
-        const ret = entry.process_reaction( obj );
-        if ( null != ret ) {
+        // NB: All angle and energy checks should be specific to the reaction and handled by each instance
+        // The angle check and product generation will both need to know if the specific order matters.
+        var ret = null;
+        obj.precalc_collision_energy();
+        for ( let i = 0; i < nEntries; i++ ) {
+            let entry = arrEntries[i];
+            // Energy check. The easier to do.
+            if ( obj.ECollide < entry.EActivation ) { continue; }
+            // Angle check. More expensive. Will keep swapping all the time, I think...
+            let bFlip = obj.flip_product_orientation( entry.reactantNames );
+            let bCheck = ( bFlip ) ? entry.check_angles_general( mol2, mol1, obj.pContact ) : entry.check_angles_general( mol1, mol2, obj.pContact );
+            if ( !(bCheck) ) { continue; }
+            // Do reaction. Should be successful now.
             //console.log(`Collision between ${mol1.name} & ${mol2.name}, reaction success.`);
-            return ret;
-        } else {
-            // Elastic collision exit point for molecules that could react but have failed above checks.
-            //console.log(`Collision between ${mol1.name} & ${mol2.name}, reaction failed.`);
-            obj.resolve_collision();
-            return null;
+            if ( bFlip ) { obj.swap_molecules( 0, 1 ); }                        
+            return entry.process_reaction( obj );
         }
+        // Elastic collision exit point for molecules that could react but have failed above checks.
+        //console.log(`Collision between ${mol1.name} & ${mol2.name}, reaction failed.`);
+        obj.resolve_collision();
+        return null;
     }
                 
 }
@@ -279,8 +321,11 @@ class molSystem {
         this.pContact    = undefined;
         this.pContactRel = undefined;
         this.vecNormal   = undefined;
-        
+
+        this.dotProducts = undefined;
+        this.ECollide    = undefined;
         //this.reset_component_energies();
+        
     }
 
     reset_component_energies() {
@@ -419,9 +464,8 @@ class molSystem {
     }
 
     get_radial_components_sum() {
-        let ret = 0.0;
-        for ( let i = 0; i < this.nMol; i++ ) { ret += this.TEradials[i] + this.REradials[i]; }
-        return ret;
+        this.ECollide = 0.0;
+        for ( let i = 0; i < this.nMol; i++ ) { this.ECollide += this.TEradials[i] + this.REradials[i]; }
     }
 
     get_total_energy_from_mols() {
@@ -431,10 +475,10 @@ class molSystem {
     }   
 
     // This one is used when the COM energies have already been calculated.
-    get_total_energy( bIncludeTEcom ) {
-        if ( undefined === bIncludeTEcom ) { bIncludeTEcom = true; }
+    get_non_TECOM_energies() {
+        //if ( undefined === bIncludeTEcom ) { bIncludeTEcom = true; }
         let ETot = 0.0;       
-        if ( bIncludeTEcom ) { ETot += this.TEcom; }        
+        //if ( bIncludeTEcom ) { ETot += this.TEcom; }        
         this.arrMol.forEach( ( mol, i ) => {
             ETot += this.TEradials[i] + this.TEtangents[i] + this.REradials[i] + this.REtangents[i];
             //console.log(this.TEradials[i], this.TEtangents[i], this.REradials[i], this.REtangents[i]);
@@ -498,6 +542,24 @@ class molSystem {
             }
         }
         return false;
+    }
+
+        // const mol1 = obj.mol1, mol2 = obj.mol2, pContact = obj.pContact; 
+        // if ( mol1.rotI > 0.0 ) {
+            // const dot1 = Vector2D.dot( pContact.subtract(mol1.p).unit(), Vector2D.UnitVector( mol1.th + this.reactantAngles[0] ) );
+            // if ( dot1 < this.reactantAngleRanges[0] ) { return false; }
+        // }
+        // if ( mol2.rotI > 0.0 ) {
+            // const dot2 = Vector2D.dot( pContact.subtract(mol2.p).unit(), Vector2D.UnitVector( mol2.th + this.reactantAngles[1] ) );
+            // if ( dot2 < this.reactantAngleRanges[1] ) { return false; }
+        // }
+
+    //Requires pContact to be defined.
+    precalc_collision_energy() {        
+        // Works out the component of kinetic energy radial to the point of contact.
+        this.calculate_COM_configuration();
+        this.calculate_component_energies();
+        this.get_radial_components_sum();                
     }
 
     /* General rigid body collision solver. Used when there is no reaction, but requires a pre-defined contant point and normal. */
@@ -620,26 +682,9 @@ class reaction {
         //Do nothing.
     };
     
-    // Dummy functions that may be available depending on the type of reaction. Written here as documentation of expected usage
-    // check_angles( mol1, mol2, pContact ) { return false; }
-    check_angles_1mol( obj ) {
-        const mol1 = obj.mol1, pContact = obj.pContact; 
-        const dot1 = Vector2D.dot( pContact.subtract(mol1.p).unit(), Vector2D.UnitVector( mol1.th + this.reactantAngles[0] ) );
-        if ( dot1 < this.reactantAngleRanges[0] ) { return false; }
-        return true;
-    }        
-    
-    check_angles_2mol( obj ) {
-        const mol1 = obj.mol1, mol2 = obj.mol2, pContact = obj.pContact; 
-        const dot1 = Vector2D.dot( pContact.subtract(mol1.p).unit(), Vector2D.UnitVector( mol1.th + this.reactantAngles[0] ) );
-        if ( dot1 < this.reactantAngleRanges[0] ) { return false; }
-        const dot2 = Vector2D.dot( pContact.subtract(mol2.p).unit(), Vector2D.UnitVector( mol2.th + this.reactantAngles[1] ) );
-        if ( dot2 < this.reactantAngleRanges[1] ) { return false; }
-        return true;
-    }
-    
-    check_angles_general( obj ) {
-        const mol1 = obj.mol1, mol2 = obj.mol2, pContact = obj.pContact; 
+    // Generic angle checking function that all multi-molecular reactions must pass.
+    // An angle is computed by comparing the orientation of the molecule with the vector of the contact point.
+    check_angles_general( mol1, mol2, pContact ) {
         if ( mol1.rotI > 0.0 ) {
             const dot1 = Vector2D.dot( pContact.subtract(mol1.p).unit(), Vector2D.UnitVector( mol1.th + this.reactantAngles[0] ) );
             if ( dot1 < this.reactantAngleRanges[0] ) { return false; }
@@ -667,6 +712,7 @@ class reaction {
         //Add products.
         return arrMolNew;
     }
+
 }
 
 /* = = Subclasses for Decomposition reactions = = */
@@ -687,7 +733,6 @@ class reactionDecomposition extends reaction {
     
     process_reaction( obj ) {
         const mol = obj.mol;
-        //Hack to borrow energy from the translational freedoms.
         var RE = mol.get_rotational_energy() ;
         if ( RE > this.EActivation && Math.random() < this.probRemain ) {
             //Successful reaction. Compute product kinetic properties and pass back to the simulation.
@@ -705,15 +750,59 @@ class reactionDecomposition extends reaction {
             molSystem.rescale_velocities_by_energy_conservation( obj, sysNew, this.DeltaH );
             //console.log(`Decomposition reaction occurred: ${mol.name} -> ${mNew1.name} + ${mNew2.name}`);
             //sysNew.check_integrity();
-
             return [ mNew1, mNew2 ];
 
         } else {
             return null;
         }    
     }
+    
+    //process_reaction_flipped();
 }
 
+
+class reactionCollisionAidedDecomposition extends reaction {
+    // Decompose a polyatomic molecule after a colision into two polyatomic species each with rotational energy.
+    // AB + M -> A + B + M. 
+    // This process is aided instead by an participating molecule. Scenarios where this happens includes QM cases where the extra molecule enables a forbiddden quantum transitions via spin interactions with the reactant. (Is it the main reason why this path exists?)
+    // Unlike unimolecular above, we do not worry about the lifetime of the activated products. Just decompose them immediately.
+    constructor( args ) {
+        super( args );
+        this.reactantAngles = args.reactantAngles;
+        this.reactantAngleRanges = args.reactantAngleRanges;        
+        this.assert();
+    }
+    
+    process_reaction( obj ) {
+        
+        const EOldCheck = obj.get_total_energy_from_mols();
+
+        // Work out the elastic collision. Then decompose mol1 into the prodcut molecules.
+        obj.resolve_collision();
+        const mol1 = obj.mol1, mol2 = obj.mol2;
+        const mNew1 = this.moleculeLibrary.create_molecule( this.products[0], { v:mol.v.copy() });
+        const mNew2 = this.moleculeLibrary.create_molecule( this.products[1], { v:mol.v.copy() });
+        const mNew3 = this.moleculeLibrary.duplicate_molecule( mol2 );
+        
+        this.assign_new_positions_2mol( mNew1, mNew2, mol1.p, mol1.th );
+        const sysNew = new molSystem( [ mNew1, mNew2, mNew3 ] );
+        // Conserve angular momentum as well as linear momentum.            
+        molSystem.distribute_angmoment_with_partial_energy_conservation( obj, sysNew );            
+        
+        // Rescale energies so as to conserve energy from breaking the bond.
+        // This breaks momentum conservation.
+        molSystem.rescale_velocities_by_energy_conservation( obj, sysNew, this.DeltaH );
+        console.log(`DecompositionM reaction occurred: ${mol1.name} + ${mol2.name} -> ${mNew1.name} + ${mNew2.name} + ${mol2.name}`);
+        sysNew.check_integrity();
+        
+        const ENewCheck = sysNew.get_total_energy_from_mols();
+        console.log( `Checking energy totals: ${EOldCheck} = ${ENewCheck} + ${this.DeltaH}` );
+        return [ mNew1, mNew2, mNew3 ];
+ 
+    }
+    
+    //process_reaction_flipped();
+}
 
 /* = = Subclasses for Combination reactions = =
     Note that the two directionas are currently not equivalent.
@@ -733,44 +822,49 @@ class reactionCombination extends reaction {
     }
     
     process_reaction( obj ) {
-        if ( false === this.check_angles_general( obj ) ) { return null; }
-        const mol1 = obj.mol1, mol2 = obj.mol2 ;
-        //Get pre-defined args.dp, args.mSum and args.pCOM
-        obj.calculate_COM_configuration();
-        obj.calculate_component_energies();
-        const EAvail = obj.get_radial_components_sum();        
-        if ( EAvail > this.EActivation ) {
-            // Successful reaction. Compute product kinetic properties and pass back to the simulation.            
-            const thSwitch = obj.flip_product_orientation( this.reactantNames ) ? Math.PI : 0.0 ;            
-            const theta = Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) + thSwitch + this.angleReactionOffset;
-            // Enact conservation of linear momentum here.
-            const mNew = this.moleculeLibrary.create_molecule( this.products[0], { p: obj.p, v: obj.v, th: theta });
-            // Enact conservation of angular momentum here. Sometimes this is nowhere near energy conserved!!
-            obj.calculate_angular_momentums();
-            mNew.om = ( obj.AngMomentumsExt + obj.AngMomentumsInt ) / mNew.rotI ;
-            
-            let TEnew = mNew.get_kinetic_energy(), REnew = mNew.get_rotational_energy() ;
-            const EExcess = obj.get_total_energy( false ) - mNew.get_rotational_energy() - this.DeltaH;            
-            let ERatio = ( REnew + TEnew + EExcess )/ (REnew + TEnew);            
-            if (ERatio < 0) { console.log(REnew, TEnew, EExcess, ERatio); throw "Negative output energy found! Aborting."; }
-            // Rescale energies so as to conserve energy and re-break conservation of momentum.
-            mNew.rescale_velocities( Math.sqrt(ERatio) ); 
-            // TEnew *= ERatio ; REnew *= ERatio;
-            // mNew.v.scale( Math.sqrt( 2.0 * TEnew / (mNew.mass * mNew.v.norm2()) ) ); // 2 of 3 degrees of freedom to KE.
-            // mNew.om = Math.sign( mNew.om ) * Math.sqrt( 2.0 * REnew / mNew.rotI ); // 1 of 3 degrees of freedom.
-            // let Ediff = mNew.get_total_energy() - mol1.get_total_energy() - mol2.get_total_energy();
-            // console.log( Ediff, this.DeltaH , ERatio ) ;
 
-            //console.log(`Combination reaction occurred: ${mol1.name} + ${mol2.name} -> ${mNew.name}`);
-            //const sysNew = new molSystem([ mNew ] );
-            //sysNew.check_integrity();
-            
-            return [ mNew ];
-        } else {
-            //console.log(`Energy check fail. Energy: ${EAvail}`);
-            return null;
-        }    
+        const mol1 = obj.mol1, mol2 = obj.mol2 ;
+
+        // Successful reaction. Compute product kinetic properties and pass back to the simulation.            
+        //const thSwitch = obj.flip_product_orientation( this.reactantNames ) ? Math.PI : 0.0 ;            
+        //const theta = Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) + thSwitch + this.angleReactionOffset;
+        const theta = Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) + this.angleReactionOffset;
+        // Enact conservation of linear momentum here.
+        const mNew = this.moleculeLibrary.create_molecule( this.products[0], { p: obj.p, v: obj.v, th: theta });
+        // Enact conservation of angular momentum here. Sometimes this is nowhere near energy conserved!!
+        
+        obj.calculate_angular_momentums();
+        mNew.om = ( obj.AngMomentumsExt + obj.AngMomentumsInt ) / mNew.rotI ;
+        //if ( Number.isNaN( mNew.om ) ) { console.log("WARNING: rotational speed is NaN!"); }
+        //mNew.debug();
+                
+        let TEnew = mNew.get_kinetic_energy(), REnew = mNew.get_rotational_energy() ;
+        obj.calculate_component_energies();
+        const EExcess = obj.get_non_TECOM_energies() - mNew.get_rotational_energy() - this.DeltaH;            
+        let ERatio = ( REnew + TEnew + EExcess )/ (REnew + TEnew);            
+        if ( ERatio < 0 || Number.isNaN( ERatio ) ) { console.log(REnew, TEnew, EExcess, ERatio); throw "Negative output energy found! Aborting."; }
+        // Rescale energies so as to conserve energy and re-break conservation of momentum.
+        mNew.rescale_velocities( Math.sqrt(ERatio) ); 
+
+        // TEnew *= ERatio ; REnew *= ERatio;
+        // mNew.v.scale( Math.sqrt( 2.0 * TEnew / (mNew.mass * mNew.v.norm2()) ) ); // 2 of 3 degrees of freedom to KE.
+        // mNew.om = Math.sign( mNew.om ) * Math.sqrt( 2.0 * REnew / mNew.rotI ); // 1 of 3 degrees of freedom.
+        // let Ediff = mNew.get_total_energy() - mol1.get_total_energy() - mol2.get_total_energy();
+        // console.log( Ediff, this.DeltaH , ERatio ) ;
+
+        //console.log(`Combination reaction occurred: ${mol1.name} + ${mol2.name} -> ${mNew.name}`);
+        //const sysNew = new molSystem([ mNew ] );
+        //sysNew.check_integrity();                        
+        if ( Number.isNaN( mNew.v.x ) || Number.isNaN( mNew.v.y ) ) {
+            mol1.debug();
+            mol2.debug();
+            mNew.debug();
+            throw "NaN velocity values have been detected in a combination reaction: ${mol1.name} + ${mol2.name} -> ${mNew.name}!";
+        }
+        
+        return [ mNew ];
     }
+    
 }
 
 /*
@@ -788,72 +882,69 @@ class reactionTransfer extends reaction {
     }
             
     process_reaction( obj ) {
-        if ( false === this.check_angles_general( obj ) ) { return null; }
-        //Get pre-defined args.dp, args.mSum and args.pCOM
-        obj.calculate_COM_configuration();
-        obj.calculate_component_energies();
-        const EAvail = obj.get_radial_components_sum();
-        const ETotalOld = obj.get_total_energy( true );
-        if ( EAvail > this.EActivation ) {            
-            // Successful reaction.
-            //console.log(`Successful reaction between ${obj.mol1.name} and ${obj.mol2.name}`);
-            // Check if the reactants need to be flipped so-as to generate a new product.
-            if ( obj.flip_product_orientation( this.reactantNames ) ) {
-                obj.swap_molecules( 0, 1 );
-            }
-            const mol1 = obj.mol1, mol2 = obj.mol2 ;
-            
-            // Compute momentum to be transferred via a delta-v directly between molecules.
-            const dp = mol2.p.subtract( mol1.p ).unit();
-            const dv = dp.scaled_copy( Vector2D.dot( mol1.v, dp ) - Vector2D.dot( mol2.v, dp ) );
-            
-            // Now enact an elastic collision.
-            obj.resolve_collision();
-            
-            //NB: It's likely that some rotational momentunma nd energy might be lost when one partner becomes a monoatomic molecule.
-            const mNew1 = this.moleculeLibrary.create_molecule( this.products[0], { p: obj.p.copy(), om: mol1.om });
-            const mNew2 = this.moleculeLibrary.create_molecule( this.products[1], { p: obj.p.copy(), om: mol2.om });
-            //console.log(`Products ${mNew1.name} and ${mNew2.name} have been created.`);
-            this.assign_new_positions_2mol( mNew1, mNew2, obj.p, Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) );
-            // mNew1.p.sincr( 1.01 * mNew1.get_size(), obj.pRel[1].unit() );
-            // mNew2.p.sincr( 1.01 * mNew2.get_size(), obj.pRel[0].unit() );
-            // const theta = Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) + this.angleReactionOffset;
-            // mNew1.set_theta( this.productAngles[0] + theta );
-            // mNew2.set_theta( this.productAngles[1] + theta );
-            
-            const sysNew = new molSystem( [ mNew1, mNew2 ]);
-            //console.log( ETotalOld, sysNew.get_total_energy_from_mols() );
-            if ( Number.isNaN ( sysNew.get_total_energy_from_mols() ) ) { throw "NaN detected!"; }
-            //Enact COM-aligned momentum transfer post elastic-collision. Assume that mass is lost by the first molecule and equal mass is gained by the second.
-            if ( true ) {
-                const mDiff = mol1.mass - mNew1.mass;
-                mNew1.v.set_to( Vector2D.weighted_sum( mol1.mass, mol1.v, -mDiff, dv ) );
-                mNew1.v.scale( 1.0/mNew1.mass );
-                mNew2.v.set_to( Vector2D.weighted_sum( mol2.mass, mol2.v, mDiff, dv ) );
-                mNew2.v.scale( 1.0/mNew2.mass );
-            } else {
-                mNew1.v.set_to( mol1.v ) ; mNew2.v.set_to( mol2.v );
-            }
-            
-            // Rescale energies so as to conserve energy instead of momentum.
-            // console.log( ETotalOld, sysNew.get_total_energy_from_mols() );
-            // if ( Number.isNaN ( sysNew.get_total_energy_from_mols() ) ) { throw "NaN detected!"; }            
-            molSystem.rescale_velocities_by_energy_conservation( obj, sysNew, this.DeltaH );
-            //console.log( ETotalOld, '-', this.DeltaH, '->', sysNew.get_total_energy_from_mols() );            
-            //console.log(`Transfer reaction occurred: ${mol1.name} + ${mol2.name} -> ${mNew1.name} + ${mNew2.name}`);
-            //sysNew.check_integrity();
-            
-            
-            return [ mNew1, mNew2 ];
+        
+        const ETotalOld = obj.get_total_energy_from_mols();
+        // Successful reaction.
+        //console.log(`Successful reaction between ${obj.mol1.name} and ${obj.mol2.name}`);
+        // Check if the reactants need to be flipped so-as to generate a new product.
+
+        const mol1 = obj.mol1, mol2 = obj.mol2 ;
+        
+        // Compute momentum to be transferred via a delta-v directly between molecules.
+        const dp = mol2.p.subtract( mol1.p ).unit();
+        const dv = dp.scaled_copy( Vector2D.dot( mol1.v, dp ) - Vector2D.dot( mol2.v, dp ) );
+        
+        // Now enact an elastic collision.
+        obj.resolve_collision();        
+        //NB: It's likely that some rotational momentunma nd energy might be lost when one partner becomes a monoatomic molecule.
+        const mNew1 = this.moleculeLibrary.create_molecule( this.products[0], { p: obj.p.copy(), om: mol1.om });
+        const mNew2 = this.moleculeLibrary.create_molecule( this.products[1], { p: obj.p.copy(), om: mol2.om });
+        //console.log(`Products ${mNew1.name} and ${mNew2.name} have been created.`);
+        this.assign_new_positions_2mol( mNew1, mNew2, obj.p, Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) );
+        // mNew1.p.sincr( 1.01 * mNew1.get_size(), obj.pRel[1].unit() );
+        // mNew2.p.sincr( 1.01 * mNew2.get_size(), obj.pRel[0].unit() );
+        // const theta = Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) + this.angleReactionOffset;
+        // mNew1.set_theta( this.productAngles[0] + theta );
+        // mNew2.set_theta( this.productAngles[1] + theta );
+        
+        const sysNew = new molSystem( [ mNew1, mNew2 ]);
+        //console.log( ETotalOld, sysNew.get_total_energy_from_mols() );
+        if ( Number.isNaN ( sysNew.get_total_energy_from_mols() ) ) { throw "NaN detected!"; }
+        //Enact COM-aligned momentum transfer post elastic-collision. Assume that mass is lost by the first molecule and equal mass is gained by the second.
+        if ( true ) {
+            const mDiff = mol1.mass - mNew1.mass;
+            mNew1.v.set_to( Vector2D.weighted_sum( mol1.mass, mol1.v, -mDiff, dv ) );
+            mNew1.v.scale( 1.0/mNew1.mass );
+            mNew2.v.set_to( Vector2D.weighted_sum( mol2.mass, mol2.v, mDiff, dv ) );
+            mNew2.v.scale( 1.0/mNew2.mass );
         } else {
-            //console.log(`Energy check fail. Energy: ${EAvail}`);
-            return null;
-        }    
+            mNew1.v.set_to( mol1.v ) ; mNew2.v.set_to( mol2.v );
+        }
+        
+        // Rescale energies so as to conserve energy instead of momentum.
+        // console.log( ETotalOld, sysNew.get_total_energy_from_mols() );
+        // if ( Number.isNaN ( sysNew.get_total_energy_from_mols() ) ) { throw "NaN detected!"; }            
+        molSystem.rescale_velocities_by_energy_conservation( obj, sysNew, this.DeltaH );
+        
+        //console.log(`Transfer reaction occurred: ${mol1.name} + ${mol2.name} -> ${mNew1.name} + ${mNew2.name}`);
+        //sysNew.check_integrity();
+
+        //console.log( `Energy transfer: ${ETotalOld} - ${this.DeltaH} -> ${sysNew.get_total_energy_from_mols()}` );
+        if ( Number.isNaN( mNew1.v.x ) || Number.isNaN( mNew2.v.x ) ) {
+            mol1.debug();
+            mol2.debug();
+            mNew1.debug();
+            mNew2.debug();
+            console.log( ETotalOld, '-', this.DeltaH, '->', sysNew.get_total_energy_from_mols() );
+            throw "NaN velocity values have been detected in a transfer reaction: ${mol1.name} + ${mol2.name} -> ${mNew1.name} + ${mNew2.name}!";
+        } 
+        
+        return [ mNew1, mNew2 ];
+ 
     }    
+    
+    //process_reaction_flipped();
 }
-
-
-
 
 /*
     Interface function with overall program to setup example reactions.
@@ -885,21 +976,21 @@ function get_new_preset_gas_reactions( args ) {
     if ( undefined === args.moleculeLibrary ) { throw "Creation requires a molecule library to be given!"; }
 
     let gr = undefined;
-    //let gr = new InteractionHandler();
-    //gr.set_
+    const species = globalVars.presets[ type ].componentIDs;
+    gr = new InteractionHandler({ species: species, moleculeLibrary: args.moleculeLibrary });    
+    
+    // Now see what kind of reactions we need to load.
+    // TODO Shift everything into Globals.
+    var arrReactions = undefined;
     switch( type ) {
         case'none':
         case 'noble gas':
-            gr = new InteractionHandler({ species: ["He","Ne","Ar","Kr","Xe"], moleculeLibrary: args.moleculeLibrary } );
-            break;
         case 'atmosphere':
-            gr = new InteractionHandler({ species: ["N₂","O₂","Ar","H₂O"], moleculeLibrary: args.moleculeLibrary } );
             break;
         case 'nitrogen dioxide':
             // DeltaH for the dissociation is ~13 kcal/mol with Ea of ~14 kcal/mol, or 54 & 59 kJ/mol.
             // The experimental self dissociation rate constant is ~ 1e6 per second at 298K. This is roughly 39 kJ/mol
             // Source: Ornellas et al., 2003. DOI: 10.1063/1.459256
-            gr = new InteractionHandler({ species: ["NO₂","N₂O₄"], moleculeLibrary: args.moleculeLibrary } );
             gr.parse_input_reaction({
                 //Participants.
                 reactantNames: ["NO₂", "NO₂"],                
@@ -918,69 +1009,37 @@ function get_new_preset_gas_reactions( args ) {
             });  
             break;
             
-        // Heat of formation dataset at 298 K: https://atct.anl.gov/Thermochemical%20Data/version%201.118/        
-        // Full list: H = 216 ; O = 246 ; H2O = -239 ; OH = 37
-        // Arrhenius activation energies have not been searched, and thus have been guessed.
-        case 'combustion - H2 and O2':
-            gr = new InteractionHandler( { species: ["H₂","O₂","H₂O","O•","H•","OH•"], moleculeLibrary: args.moleculeLibrary } );
-            //Radical creation and elimination
-            // H2 <-> 2H* DeltaH = 2* 216 kJ/mol.
-            gr.parse_input_reaction({
-                reactantNames: ["H•", "H•"], productNames: ["H₂"],
-                EActivation: 0, DeltaH: -43.2, lifetimeActivated: 1000,
-            });
-            // O2 <-> 2O* DeltaH = 2 * 246 kJ/mol.
-            gr.parse_input_reaction({
-                reactantNames: ["O•", "O•"], productNames: ["O₂"],
-                EActivation: 0, DeltaH: -49.2, lifetimeActivated: 1000,
-                bDoReverse: false,
-            });
-            // OH + O <-> H2O.  DeltaH = -522 kJ/mol
-            gr.parse_input_reaction({
-                reactantNames: ["OH•", "H•"], productNames: ["H₂O"],
-                EActivation: 0.5, DeltaH: -52.2, lifetimeActivated: 1000,
-                reactantAngles:      [   0,   0 ], // Filled with 0.0 is not given.
-                reactantAngleRanges: [ 240, 360 ], // Filled with 360 if not given. 
-                productAngles:       [ 0 ],
-                productAngleRanges:  [ 0 ],
-                bDoReverse: false,
-            });
-            //  O2 + H <-> OH + O. Propagation collisions.
-            // DeltaH ~ 67 kJ/mol            
-            gr.parse_input_reaction({
-                reactantNames: ["O₂", "H•"], productNames: ["OH•", "O•"],
-                EActivation: 7.0, DeltaH: 6.7,
-                reactantAngles:      [   0,   0 ], 
-                reactantAngleRanges: [ 360, 360 ],
-                productAngles:       [   0,   0 ],
-                productAngleRanges:  [ 240, 360 ],
-            });            
-            //  H2 + O <-> OH + H.  DeltaH = 7kJ/mol
-            gr.parse_input_reaction({
-                reactantNames: ["H₂", "O•"], productNames: ["OH•", "H•"],
-                EActivation: 1.0, DeltaH: 0.7,
-                reactantAngles:      [   0,   0 ], 
-                reactantAngleRanges: [ 360, 360 ],
-                productAngles:       [ 180,   0 ],
-                productAngleRanges:  [ 240, 360 ],
-            });                        
-            //  OH + H2 <-> H2O + H.  DeltaH = -60 kJ/mol 
-            gr.parse_input_reaction({
-                reactantNames: ["OH•", "H₂"], productNames: ["H₂O", "H•"],
-                EActivation:  6.0, DeltaH: -6.0,
-                reactantAngles:      [   0,   0 ], 
-                reactantAngleRanges: [ 240, 360 ],
-                productAngles:       [ 180,   0 ],
-                productAngleRanges:  [ 240, 360 ],
-                bDoReverse: false,
-            });
-            // Self transmission probability.  H2 + H <-> H + H2.  DeltaH = 0kJ/mol 
-            gr.parse_input_reaction({
-                reactantNames: ["H₂", "H•"], productNames: ["H•", "H₂"],
-                EActivation: 10.8, DeltaH: 0.0,
-            });
-            
+        case 'hydrogen iodide equilibrium':
+            arrReactions = globalVars.presetReactions[ "hydrogen iodide equilibrium" ];
+            arrReactions.forEach( r => { gr.parse_input_reaction( r ); });        
             break;
+            
+        case 'ozone layer formation':
+            arrReactions = globalVars.presetReactions[ "ozone layer formation" ];
+            arrReactions.forEach( r => { gr.parse_input_reaction( r ); });
+            break;        
+
+        case 'combustion - H2 and O2':
+            arrReactions = globalVars.presetReactions[ "combustion - H2 and O2" ];
+            arrReactions.forEach( r => { gr.parse_input_reaction( r ); });
+            break;
+
+        case 'combustion - H2 and O2 adv.':
+            arrReactions = globalVars.presetReactions[ "combustion - H2 and O2" ];
+            arrReactions.forEach( r => { gr.parse_input_reaction( r ); });
+            arrReactions = globalVars.presetReactions[ "ozone layer formation" ];
+            arrReactions.forEach( r => { gr.parse_input_reaction( r ); });            
+            arrReactions = globalVars.presetReactions[ "combustion - H2 and O2 adv." ];
+            arrReactions.forEach( r => { gr.parse_input_reaction( r ); });
+            break;
+            
+        case 'combustion - hydrocarbon':
+            /*
+                This is a simplified version of the full methane/air combustion mechanism. THe most famous model is GRIMech 3.0 (https://www.cerfacs.fr/cantera/mechanisms/meth.php). We'll want to take the Lu and Law reduced version that do not involve nitrogen species. This also embeds the hydrogen oxygen combustion mechanisms above alongside peroxide pathways.                
+            */
+        
+            break;
+            
         case 'custom':
             gr = new InteractionHandler([]);        
             break;

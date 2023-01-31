@@ -29,6 +29,7 @@ function erfinv(x) {
   return sqrt2 * Math.sign(x) ;
 }
 
+function gaussian( x, m, s ) { return Math.exp( -0.5*(x-m)*(x-m)/(s*s) ); }
 /* Note: something seems wrong in the sampling of these velocities. The temperatuer returned is never quite the input. */
 
 // These factors are to be used to scale the random distrubtions so as to replicate the relevant chi distributions.
@@ -85,7 +86,6 @@ function random_2DUniform(xmin, xmax, ymin, ymax) {
 function randomRGB() {
     return `rgb(${random(0, 255)},${random(0, 255)},${random(0, 255)})`;
 }
-
 
 // 2D Vector functions
 class Vector2D {

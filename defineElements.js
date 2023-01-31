@@ -52,6 +52,8 @@ class ElementList {
         this.elements.push(e);
         e = new Element( 36, "Kr", 83.798, 202, [170, 170, 170] );
         this.elements.push(e);
+        e = new Element( 53,  "I", 126.90, 198, [172,   0, 192] );
+        this.elements.push(e);
         e = new Element( 54, "Xe", 131.29, 216, [153, 153, 153] );
         this.elements.push(e);
     }

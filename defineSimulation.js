@@ -9,6 +9,7 @@ class Simulation {
         this.moletypeColours = [];
         this.nDegrees = 0;
         this.nMoleculesTarget = 0;
+        this.nTrialsPosition = 1000; //Attempt this many trials when placing molecules before erroring out.
         
         //Objects to be initialised.
         this.moleculeLibrary = undefined;
@@ -33,7 +34,7 @@ class Simulation {
         this.graphicalContext = null ;
         this.xBounds = new Vector2D(0, 1);
         this.yBounds = new Vector2D(0, 1);
-        this.refreshAlpha = 0.5 ;
+        this.refreshAlpha = 0.4 ;
         this.bDrawMolecules = true;
         
         // Accounting features.
@@ -55,6 +56,10 @@ class Simulation {
             NB: Bivariate graphs have a separate labels array to denote the legend.
         */
         this.dataFrame = undefined;
+        
+        /* array of modules that the simulation doesn't know the contents of. */
+        this.nModules = 0;
+        this.modules = [];
     }
     
     reset() {
@@ -139,6 +144,22 @@ class Simulation {
     get_random_position( margin ) {
         return random_2DUniform( this.xBounds.x + margin, this.xBounds.y - margin, this.yBounds.x + margin, this.yBounds.y - margin);
     }
+    
+    find_open_position( size ) {
+        const nTrials = this.nTrialsPosition, nMols = this.nMolecules;
+        let pTest = undefined, bCollide = false;
+        for ( let i = 0; i < nTrials; i++ ) { 
+            pTest = this.get_random_position( size );
+            bCollide = false;
+            for ( let j = 0; j < nMols; j++ ) {
+                let pMol = this.molecules[j].p, sMol = this.molecules[j].size;
+                var sepSq = (pMol[0]-pTest[0])*(pMol[0]-pTest[0]) + (pMol[1]-pTest[1])*(pMol[1]-pTest[1]);
+                if ( sepSq < (sMol+size)*(sMol+size) ) { bCollide = true; break; }
+            }
+            if ( !(bCollide) ) { return pTest; }
+        }
+        throw `ERROR: Failed to find open space for a molecule with size ${size}. Simulation is probably too densely packed!`;
+    }
     // mass is defined in amu. velocity as pm per fs.
     // KE is thus measured as 1 kJ/mol = 1000 kg m^2 / ( s^2 mol) = 1 amu pm^2 / fs^2.
 
@@ -159,11 +180,12 @@ class Simulation {
         
         let pInit = undefined, mol = undefined;
         for ( let i = 0; i < n; i++ ) {
-            pInit = this.get_random_position( moltype.size );
+            pInit = this.find_open_position( moltype.size );
             mol = this.moleculeLibrary.create_molecule( moltype, { bSample: true, T: this.temperature, p: pInit } );
             this.molecules.push( mol );
+            this.nMolecules++; 
         }
-        this.nMolecules += n; this.nDegrees += mol.nDegrees * n;
+        this.nDegrees += mol.nDegrees * n;
         this.moletypeCounts[j] += n;
     }
     
@@ -231,7 +253,7 @@ class Simulation {
                 throw `Simulation instance does not understand the type of Gas-composition: ${this.gasComp.type} !`;
         }
         
-        //Create and manage the data frames.
+        //Create and manage the data frames that stores time plots for the line graph.
         this.reset_data_frame();
         this.moletypeNames.forEach( name => {
             var colour = this.moleculeLibrary.get_molecule_color(name);
@@ -312,8 +334,15 @@ class Simulation {
     // New strategy is to put all of the circles of the same colour in a single path.
     // This is best done with a molecule colouring scheme.    
     draw_all_new() {
+        const ctxLoc = this.graphicalContext;
         
         this.draw_background();
+        
+        //Modules
+        for (let i = 0; i < this.nModules; i++ ) {
+            this.modules[i].draw_call( ctxLoc );
+        }
+        
         //Collect every atom grouped by molecule colour.
         const xPos = {}, yPos = {}, rads = {}, colours = {};
         for ( const name of this.moletypeNames ) {
@@ -330,7 +359,6 @@ class Simulation {
         }
         
         //Draw one path for each colour.
-        const ctxLoc = this.graphicalContext;        
         for ( const name of this.moletypeNames ) {
             ctxLoc.beginPath();                
             ctxLoc.fillStyle = colours[name];
@@ -410,9 +438,10 @@ class Simulation {
 
         //Resolve any spontaneous decomposition reactions
         //Placeholder for reaction list.
-        var ret = undefined, arrDel = [], arrAdd = [];
+        const arrDel = [], arrAdd = [];
+        //let ret = undefined;        
         for (const mol of this.molecules) {
-            ret = this.gasReactions.process_molecule_selfinteraction(mol);
+            let ret = this.gasReactions.process_molecule_selfinteraction(mol);
             if ( null != ret ) {
                 arrDel.push( mol );
                 ret.forEach( m => { arrAdd.push( m ); });
@@ -429,10 +458,13 @@ class Simulation {
         }
         
         // Detect and resolve collisions
+        //const t0 = performance.now();
         const molPairs = this.detect_potential_collisions();
+        // const t1 = performance.now();
+        // console.log(`Time required to detect collisions: ${t1-t0} ms`);        
         if ( molPairs.length > 0 ) { this.resolve_all_potential_collisions( molPairs ); }
         
-        //Run self check.
+        //Run final self check.
         //console.log(`Checking integrity at step ${this.timestep}`);        
         // for ( const mol of this.molecules ) {
             // if ( Number.isNaN( mol.v.x ) || Number.isNaN( mol.v.y ) ) {
@@ -461,6 +493,11 @@ class Simulation {
             // console.log(`Reporting at time step ${this.timestep} ( ${this.nMolecules} molecules )` );
             // console.log("System linear momentum per molecule:", sysP.x, sysP.y );
             // console.log("System angular momentum per molecule:", this.get_angular_momentum() / this.nMolecules );
+        }
+
+        // Modules
+        for (let i = 0; i < this.nModules; i++ ) {
+            this.modules[i].step_call();
         }        
     }
 
@@ -754,10 +791,253 @@ class Simulation {
     
     update_all_graphs() {
         this.update_doughnut_graph();
-        this.inventory_bar_graph();
-        this.update_line_graphs();
+        this.update_line_graphs();        
+        if ( this.chartBarGr.bUpdate ) { this.inventory_bar_graph(); }
         //this.update_line_graph( 0, this.timeElapsed, this.get_temperature() );
         //this.update_line_graph( 0, this.timeElapsed, this.get_total_kinetic_energy() );
         //this.update_line_graph( 1, this.timeElapsed, this.get_total_rotational_energy() );
+    }
+    
+    /*
+        Plugin Module section.
+        This section is for functionalities that are required only for specific setups.
+        Example is the UV emitter module for ozone layer models.
+    */
+    reset_plugin_modules() {
+        for ( let i = 0; i < this.nModules; i++ ) {
+            delete this.modules[i];
+        }
+        this.modules = [];
+        this.nModules = 0;
+    }
+    
+    add_plugin_module( m ) {
+        this.nModules++;
+        m.host = this;
+        this.modules.push( m );        
+    }
+    
+    set_module_variable( modType, param, val ) {
+        for ( let i = 0; i < this.nModules; i++ ) {
+            if ( this.modules[i].modType == modType ) {
+                this.modules[i].set_parameter( param, val );
+            }
+        }
+    }
+}
+
+/*
+    Module to be loaded into the simulation.`
+    Not going to worry about the dependence of effective collision cross-section on wavelength and other things.
+    See, e.g. Figure 5.02 in: http://www.ccpo.odu.edu/SEES/ozone/class/Chap_5/index.htm    
+    Intensity will be in photons per pm per fs. Drawn from a dsitribution.    
+    Photon wavelengths will be in nm.
+*/
+class PhotonEmitterModule {
+    
+    constructor( args ) {
+        if ( undefined === args ) { args = {}; }
+        
+        this.modType = 'PhotonEmitter';
+        
+        this.host = undefined; //Should only be defined when attached to a host simulation.
+        
+        this.model = undefined; // single, gaussian, or solar.        
+        this.maxLambda = undefined; //Used for solar
+        this.minLambda = undefined; //Used for solar
+        this.avgLambda = undefined; //Used for single and spectrum.
+        this.sigLambda = undefined; //Used for spectrum. In nm.
+        
+        this.set_emitter_model( args );
+        
+        this.intensity = undefined;
+        
+        this.direction = 'down';
+
+        this.pFraction = 0.0;
+        
+        this.reset_photons();
+        
+        // Formula to convert wavelength to energy.
+        // 2.998e8 * 6.626e-34 * 6.02214e23 * 1e6 -> kJ nm / mol
+        // Divide by 10 again to match the decreased barriers in this simulation.
+        this.eFactor = 11963;
+        
+        // Formula to convert wavelength to momentum.
+        // 6.626e-34 / 1e-12 * 1.66054e27 -> amu nm pm / fs
+        // Divide by 10 again to match the decreased barriers in this simulation.
+        this.mvFactor = 1.1;
+        
+        this.funcCollRadii = {
+            "O₂": PhotonEmitterModule.collision_radii_func_O2,
+            "O₃": PhotonEmitterModule.collision_radii_func_O3,
+        }
+    }
+
+    reset_photons() {
+        this.numPhotons = 0;
+        this.posXPhoton = [];
+        this.posYPhoton = [];
+        this.LPhoton = [];
+    }    
+    
+    /*
+        Add fixed collision cross-section functions based on wavelength.
+    */
+    // Imitating spectra found in Itikawa et al. (1989), DOI: 10.1063/1.555841
+    static collision_radii_func_O2( l ) { return Math.sqrt( 1150 * gaussian(l, 140, 20) / Math.PI); }
+    
+    // Imitating the absorption spectra found in Qu et al. (2015), DOI: 10.1063/1.2001650
+    // Use gaussian function: max 1140 pm^2 -> 19 pm in radii. Center of gaussian at 255 nm, with ~17 nm sigma.
+    static collision_radii_func_O3( l ) { return Math.sqrt( 1140 * gaussian(l, 255, 17) / Math.PI); }
+    
+    
+    set_emitter_model( args ) {
+        //if ( undefined === args ) { throw "Photon Emitter setup needs a model with relevant arguments!"; }
+        if ( undefined === args.model ) { args.model = 'single'; }
+        this.model = args.model;
+        if ( undefined === args.avgLambda ) { args.avgLambda = 210; }
+        if ( undefined === args.sigLambda ) { args.sigLambda =  20; }
+        if ( undefined === args.minLambda ) { args.minLambda = 100; }
+        if ( undefined === args.maxLambda ) { args.maxLambda = 280; }
+        switch ( this.model ) {
+            case 'single':
+                this.avgLambda = args.avgLambda;
+                break;
+            case 'gaussian':
+                this.avgLambda = args.avgLambda;
+                this.avgLambda = args.avgLambda;
+                break;
+            case 'solar':
+                this.minLambda = args.minLambda;
+                this.maxLambda = args.maxLambda;
+                break;
+            default:
+                throw `Unknown model give to Photon emitter! ${this.model}`;
+        }
+
+    }
+    
+    set_intensity( I ) { this.intensity = I; }
+    get_intensity() { return this.intensity; }
+        
+    calc_photon_energy( l ) { return this.eFactor / l }; // in kJ/mol
+    calc_photon_momentum( l ) { return this.mvFactor / l }; // in amu pm fs^-1
+    
+    calc_collision_radii( molName, l ) {
+        
+    }
+    
+    sample_photon_spectrum() {
+        switch( this.model ) {
+            case 'single':
+                return this.avgLambda;
+            case 'gaussian':
+                return this.avgLambda + random_1DGaussian( this.sigLambda );
+            case 'solar':
+                // Instead of the full black body radiation curve at 5900K...
+                // simple bias towards higher wavelengths to approximate the wavelength dependence in the UV regime.
+                return this.minLambda + Math.sqrt( Math.random() ) * ( this.maxLambda - this.minLambda );
+            default:
+                return undefined;
+        }
+    }   
+    
+    // Don't worry about other elastic effects like Compton scattering. Assume invisible
+    fire_ray_gun() {
+        
+        this.reset_photons();
+        
+        //assume direction is down
+        const rangeX = this.host.xBounds;
+        const rangeY = this.host.yBounds;                
+        
+        // Get a float number of photons to be expected. Use to keep track of fractional intensities.        
+        const increment = this.intensity * ( rangeX[1] - rangeX[0] ) * this.host.dt * this.host.timeFactor;
+        this.pFraction += increment;
+        
+        if ( this.pFraction < 1.0 ) { return; }
+        
+        const numPhotons = this.numPhotons = Math.floor( this.pFraction );      
+        this.pFraction -= numPhotons;        
+        const posXPhoton = this.posXPhoton;
+        const posYPhoton = this.posYPhoton;
+        const LPhoton = this.LPhoton;
+        const molInPath = [];
+        for ( let j = 0; j < numPhotons; j++ ) {
+            posXPhoton.push( random( rangeX[0], rangeX[1] ) ); 
+            posYPhoton.push( rangeY[1] );
+            LPhoton.push ( this.sample_photon_spectrum() );
+            molInPath.push( null );
+        }
+        
+        //Do only for ozone layer equilbrium for now.
+        const molNamesReaction = [ "O₂", "O₃" ];
+        //Determine potential collisions again. Make list of atoms in the path of each photon.
+        const mols = this.host.molecules;
+        const nMols = this.host.nMolecules;      
+        for ( let i = 0; i < nMols ; i++ ) {
+            //Check if the molecule is one of the candidates.            
+            if ( molNamesReaction.indexOf(mols[i].name) < 0 ) { continue; }
+            for (let j = 0 ; j < numPhotons; j++ ) {
+                let r = this.funcCollRadii[mols[i].name]( LPhoton[j] );
+                if ( Math.abs( mols[i].p.x - posXPhoton[j] ) < r ) {
+                    if ( null === molInPath[j] ) {
+                        molInPath[j] = mols[i] ;
+                        posYPhoton[j] = mols[i].p.y;
+                    } else if ( molInPath[j].p.y > mols[i].p.y  ) {
+                        molInPath[j] = mols[i] ;
+                        posYPhoton[j] = mols[i].p.y;
+                    }
+                }
+            }
+        }
+        // molInPath now contains the first eligible atom to be hit, if any.        
+
+        for ( let j = 0; j < numPhotons; j++ ) {
+            let mol = molInPath[j]; 
+            if ( null === mol ) { continue; }            
+            //console.log(`A molecule has been hit!`);
+            // Hit molecule with photon. Update momentum and energy.
+            // NB: single atoms never interact in our model.
+            //console.log( mol.name, mol.v.y, mol.om );
+            mol.v.y += this.calc_photon_momentum( LPhoton[j] ) / mol.mass;
+            const RE    = mol.get_rotational_energy();
+            const RENew = RE + this.calc_photon_energy( LPhoton[j] );
+            mol.om *= Math.sqrt(RENew/RE);            
+            //console.log( mol.name, mol.v.y, mol.om );
+
+        }
+        // Molecules hit should now contain sufficient rotational energy for decomposition reactions down the track.
+        
+        return;        
+    }
+
+    // General interface functions with the host simulation.
+    set_parameter( param, val ) {
+        switch( param ) {
+            case 'intensity':
+                this.set_intensity( val );
+                break;
+            default:
+                throw `Unknown parameter ${param} given to module ${this.modType}!`;
+        }
+    }
+    
+    step_call() { this.fire_ray_gun(); }
+    
+    draw_call( ctx ) {
+
+        const n = this.numPhotons;
+        ctx.beginPath();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgb(255,0,255)'; // Hot-pink magenta rays with width 1.
+        for ( let i = 0; i < n; i++ ) {
+            ctx.moveTo( this.posXPhoton[i]/globalVars.lengthScale, 0 );
+            ctx.lineTo( this.posXPhoton[i]/globalVars.lengthScale, this.posYPhoton[i]/globalVars.lengthScale );
+            //console.log( this.posYPhoton[i]/globalVars.lengthScale );
+        }
+        //ctx.closePath();
+        ctx.stroke();
     }
 }

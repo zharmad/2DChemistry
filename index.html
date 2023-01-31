@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width">
-    <title>Bouncing balls</title>
+    <title>2DChem gas simulator</title>
     <link rel="stylesheet" href="style.css">
   </head>
 
@@ -26,18 +26,21 @@
     <div id="sidebarParent" class="sidebarParent">
         <!-- Sidebar Handle to act as a visual border w.r.t. the main window, and manage dynamic resizing -->    
         <div id="sidebarHandle" class="sidebarHandle"></div>
+        
         <!-- Sidebar to make easy presets -->
         <div id="sidebarPresets" class="sidebarRight">
             <p>
                 <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
                 <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="regenerate_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
             </p>
             <hr width="50%" align="center" color="grey" size="2">                
             <p>Preset simulation conditions</p>
             <p><button onclick="generate_preset_simulation('noble gas')">Mixture of Noble gases</button></p>        
             <p><button onclick="generate_preset_simulation('atmosphere')">Earth Atmosphere</button></p>
+            <p><button onclick="generate_preset_simulation('ozone layer formation')">Ozone layer equilibrium</button></p>
             <p><button onclick="generate_preset_simulation('nitrogen dioxide')">Nitrogen dioxide equilibrium</button></p>
+            <p><button onclick="generate_preset_simulation('hydrogen iodide equilibrium')">Hydrogen iodide equilibrium</button></p>
             <p><button onclick="generate_preset_simulation('combustion - H2 and O2')">Oxygen and hydrogen combustion</button></p>
             <hr width="50%" align="center" color="grey" size="2">
             <p><label class="switchToggle"><input type="checkbox" id="togglePresetsOverwriteParams"><span class="sliderToggle round"></span></label> Overwrite all parameters if possible</p>
@@ -49,7 +52,7 @@
             <p>
                 <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
                 <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="regenerate_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
             </p>
             <hr width="50%" align="center" color="grey" size="2">
             <div id="toolbar" class="slidecontainer">
@@ -75,16 +78,23 @@
                 
                 <li><label class="switchToggle"><input type="checkbox" id="toggleDoHeatExchange"><span class="sliderToggle round"></span></label> Do  heat exchange at wall boundaries</li>
                 
-                <li><label class="switchToggle"><input type="checkbox" id="toggleUpdateSimWindow"><span class="sliderToggle round"></span></label> Show atom movements</li>
+                <li><label class="switchToggle"><input type="checkbox" id="toggleUpdateSimWindow"><span class="sliderToggle round"></span></label> Show atom movements</li>                
             </ul>
             </div>
+            
+            <hr width="50%" align="center" color="grey" size="2">
+            <div id="divPhotonEmitterIntensity" class="divDynamicBox">
+                <p>UV intensity: <span id="textFieldPhotonEmitterIntensity"></span></p>
+                <input type="range" min="-0.1" max="3.0" value="1.0" step="0.1" class="slider" id="sliderPhotonEmitterIntensity">
+            </div>
+
         </div>
 
         <div id="sidebarComposition" class="sidebarRight">
             <p>
                 <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
                 <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="regenerate_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
             </p>
             <hr width="50%" align="center" color="grey" size="2">
         
@@ -130,7 +140,7 @@
             <p>
                 <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
                 <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="regenerate_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
             </p>
             
             <hr width="50%" align="center" color="grey" size="2">
@@ -179,7 +189,7 @@
             <p>
                 <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
                 <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="regenerate_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
             </p>
             <hr width="50%" align="center" color="grey" size="2">
             

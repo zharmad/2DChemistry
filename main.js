@@ -88,6 +88,23 @@ toggleUpdateSimWindow.oninput = function () {
 }
 
 /*
+    Module dependent items.
+*/
+const divPhotonEmitterIntensity = document.getElementById("divPhotonEmitterIntensity");
+divPhotonEmitterIntensity.style.border = `2px solid rgb(255,0,255)`;
+const sliderPhotonEmitterIntensity = document.getElementById("sliderPhotonEmitterIntensity");
+const textFieldPhotonEmitterIntensity = document.getElementById("textFieldPhotonEmitterIntensity");
+textFieldPhotonEmitterIntensity.innerHTML = sliderPhotonEmitterIntensity.value;
+sliderPhotonEmitterIntensity.oninput = function() {
+    const converted = ( this.value >= 0 ) ? 1e-5 * Math.pow( 10.0, this.value ) : 0.0 ;
+    const strConverted = (converted * 1e3).toPrecision(2);
+    textFieldPhotonEmitterIntensity.innerHTML = `${strConverted} photons pm⁻¹ ps⁻¹`;
+    //mod.set_intensity( 0.0005 ); Start at 50. linear scale.   
+    sim.set_module_variable( 'PhotonEmitter', 'intensity', converted );
+}
+
+
+/*
     Composition GUI buttons. Store as a linear array of objects that contain references to each HTML element for adjustments.
 */
 const arrCompositionGUI = [];
@@ -194,6 +211,7 @@ chartLineGr2.options.animation.duration=0;
 const canvasBarGr = document.getElementById('canvasBarGraph');
 const chartBarGr  = new Chart( canvasBarGr, { type: 'bar', data: {} } );
 chartBarGr.options.animation.duration = 600;
+chartBarGr.bUpdate = false;
 //chartBarGr.options.scales.x.ticks.callback = (i) => (i.toExponential());
 // Main software section.
 let bRun = false;
@@ -203,7 +221,7 @@ molLib = new MoleculeLibrary();
 molLib.add_all_known_molecule_types();
 sim = new Simulation();
 sim.set_molecule_library( molLib );
-sim.setup_graphical_context(ctxSim, globalVars.worldWidth, globalVars.worldHeight, 0.4); // In Pixels.
+sim.setup_graphical_context(ctxSim, globalVars.worldWidth, globalVars.worldHeight, globalVars.refreshAlpha); // In Pixels.
 sim.update_values_from_globals();
 
 // Hook in the chart variables.
@@ -214,8 +232,7 @@ sim.chartBarGr = chartBarGr;
 
 /* Finalise intial setup. Hack to temporarily allow the HTML override values to be read and encoded. */
 globalVars.bPresetsOverwriteParams = false;
-overwrite_global_values( globalVars.initialPreset );
-check_html_overrides();
+initial_setup_with_html_vars( get_html_variables() );
 generate_preset_simulation( globalVars.initialPreset );
 globalVars.bPresetsOverwriteParams = true;
 
@@ -242,6 +259,21 @@ function start_simulation(){
 
 function stop_simulation(){
     bRun = false;
+}
+
+function restart_simulation() {
+    bRun = false;
+    //Store and retrive the current toggled state of the plot.
+    const arrHidden = {};
+    chartLineGr2.data.datasets.forEach((dataSet, i) => {
+        arrHidden[i] = chartLineGr2.getDatasetMeta(i).hidden ;
+    });
+    sim.regenerate_simulation();        
+    update_composition_GUI_from_gasComp();
+    chartLineGr2.data.datasets.forEach((dataSet, i) => {
+        chartLineGr2.getDatasetMeta(i).hidden = arrHidden[i];
+    });
+    chartLineGr2.update();
 }
 
 function regenerate_simulation(){
@@ -313,6 +345,13 @@ function update_sidebar_dimensions(s) {
         elementSidebarParent.style.width    = `${widthSidebarParentClosed}px`;        
         for ( key in elementSidebars ) { elementSidebars[key].style.width = sizeZero; }
     }
+    
+    //Pause updating of some graphs when the sidebar is closed.
+    if ( 'analysisBar' === s ) {
+        chartBarGr.bUpdate = true; sim.inventory_bar_graph();
+    } else {
+        chartBarGr.bUpdate = false;
+    }
 }
 
 function open_sidebar(x) { strOpenTab = x;  update_sidebar_dimensions(strOpenTab); }
@@ -363,7 +402,28 @@ function generate_preset_simulation( strType ) {
        
     sim.regenerate_simulation();    
 
+    // Additional setup - ranging from gui modifiation to module loading.
     sync_composition_gui( p );
+        
+    //
+    if ( undefined != p.componentHidePlot ) {
+        chartLineGr2.data.datasets.forEach((dataSet, i) => {
+            var meta = chartLineGr2.getDatasetMeta(i);
+            meta.hidden = ( p.componentHidePlot.indexOf( meta.label ) > -1 );
+        });
+        chartLineGr2.update();
+    }
+    
+    sim.reset_plugin_modules();
+    // Load Photon emitter module for presets that require them.
+    if ( strType == 'ozone layer formation' ) {
+        const mod = new PhotonEmitterModule( { model: "solar" } )
+        sim.add_plugin_module( mod );
+        divPhotonEmitterIntensity.style.display = "block";
+        sliderPhotonEmitterIntensity.oninput();
+    } else {
+        divPhotonEmitterIntensity.style.display = "none";
+    }
 }
 
 //Synchronise the composition GUI for future user modification. Hook up the variable elements directly to the gas composition object.
@@ -384,7 +444,7 @@ function sync_composition_gui( obj ) {
             name = obj.componentIDs[i];            
             color = molLib.get_molecule_color( name );
             o.slider.name = name ;
-            o.div.style.display = "block";            
+            o.div.style.display = "block";
             o.div.style.border = `2px solid ${color}`;
             //o.colourBox.style.color = `${color}`;
             o.colourBox.style.background = `${color}`;
