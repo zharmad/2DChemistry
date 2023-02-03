@@ -1,4 +1,4 @@
-// Source doc: https://github.com/mdn/learning-area/tree/main/javascript/oojs/bouncing-balls
+// Initial doc: https://github.com/mdn/learning-area/tree/main/javascript/oojs/bouncing-balls
 
 /* = = = Initialisation sectoin = = = */
 
@@ -92,6 +92,7 @@ toggleUpdateSimWindow.oninput = function () {
 */
 const divPhotonEmitterIntensity = document.getElementById("divPhotonEmitterIntensity");
 divPhotonEmitterIntensity.style.border = `2px solid rgb(255,0,255)`;
+const textFieldPhotonEmitterDescription = document.getElementById("textFieldPhotonEmitterDescription");
 const sliderPhotonEmitterIntensity = document.getElementById("sliderPhotonEmitterIntensity");
 const textFieldPhotonEmitterIntensity = document.getElementById("textFieldPhotonEmitterIntensity");
 textFieldPhotonEmitterIntensity.innerHTML = sliderPhotonEmitterIntensity.value;
@@ -230,7 +231,14 @@ sim.chartLineGr1 = chartLineGr1;
 sim.chartLineGr2 = chartLineGr2;
 sim.chartBarGr = chartBarGr;
 
-/* Finalise intial setup. Hack to temporarily allow the HTML override values to be read and encoded. */
+//Link up live-updating text fields
+sim.link_current_stats_text_fields({
+    numMolecules: document.getElementById("textFieldCurrentNumMolecules"),
+    temperature: document.getElementById("textFieldCurrentTemperature"),
+    volume: document.getElementById("textFieldCurrentVolume"),
+})
+
+/* Finalise initial setup. Hack to temporarily allow the HTML override values to be read and encoded. */
 globalVars.bPresetsOverwriteParams = false;
 initial_setup_with_html_vars( get_html_variables() );
 generate_preset_simulation( globalVars.initialPreset );
@@ -239,6 +247,9 @@ globalVars.bPresetsOverwriteParams = true;
 //Link up all graph data.
 //sim.sync_all_graphs();
 
+//document.getElementById("textFieldCurrentWorldTemperature").innerHTML = sim.textCurrentWorldTemperature;
+
+
 function loop() {
     if (!bRun) { return; }
     sim.step();
@@ -246,6 +257,27 @@ function loop() {
 }
 
 /* Functions linked-to by HTML5 buttons. Passthrough to simulations javascript as neceesary. */
+function activate_run_pause_button() {
+    if ( !bRun ) {
+        start_simulation();        
+    } else {
+        stop_simulation();
+    }
+}
+
+function activate_step_button() {
+    if ( bRun ) {
+        stop_simulation();
+    } else {
+        if (!sim.bSet) {
+            sim.set_target_number_of_molecules(sliderNumMol.value);        
+            regenerate_simulation();
+        }        
+        sim.step();
+        //requestAnimationFrame();
+    }
+}
+
 function start_simulation(){
     if (!bRun) {
         bRun = true;
@@ -416,13 +448,35 @@ function generate_preset_simulation( strType ) {
     
     sim.reset_plugin_modules();
     // Load Photon emitter module for presets that require them.
-    if ( strType == 'ozone layer formation' ) {
-        const mod = new PhotonEmitterModule( { model: "solar" } )
-        sim.add_plugin_module( mod );
-        divPhotonEmitterIntensity.style.display = "block";
-        sliderPhotonEmitterIntensity.oninput();
-    } else {
-        divPhotonEmitterIntensity.style.display = "none";
+    switch ( strType ) {
+        case "ozone layer formation":
+            var mod = new PhotonEmitterModule({
+                model: "solar",
+                minLambda: 100,
+                maxLambda: 280,
+                molNamesReaction: [ "O₂", "O₃" ],
+                photonColour: 'rgb(255,0,255)', // Hot-pink magenta rays with width 1.
+            });
+            sim.add_plugin_module( mod );
+            divPhotonEmitterIntensity.style.display = "block";
+            textFieldPhotonEmitterDescription.innerHTML = "<strong>solar UV radiation model</strong></br>";
+            sliderPhotonEmitterIntensity.value = 1.0;
+            sliderPhotonEmitterIntensity.oninput();
+            break;
+        case "hydrogen iodide equilibrium":
+           var mod = new PhotonEmitterModule({
+                model: "single",
+                avgLambda: 532.0,
+                molNamesReaction: [ "I₂" ],
+            });
+            sim.add_plugin_module( mod );
+            divPhotonEmitterIntensity.style.display = "block";
+            textFieldPhotonEmitterDescription.innerHTML = "<strong>532 nm green laser</strong></br>";
+            sliderPhotonEmitterIntensity.value = -0.1;
+            sliderPhotonEmitterIntensity.oninput();
+            break;
+        default:   
+            divPhotonEmitterIntensity.style.display = "none";
     }
 }
 

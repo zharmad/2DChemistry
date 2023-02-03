@@ -30,9 +30,9 @@
         <!-- Sidebar to make easy presets -->
         <div id="sidebarPresets" class="sidebarRight">
             <p>
-                <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
-                <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="activate_run_pause_button()">⏯️ Run/Pause</button>
+                <button class="buttonSimControl" onclick="activate_step_button()">1️⃣ Step</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">↩️ Reset</button>
             </p>
             <hr width="50%" align="center" color="grey" size="2">                
             <p>Preset simulation conditions</p>
@@ -41,7 +41,7 @@
             <p><button onclick="generate_preset_simulation('ozone layer formation')">Ozone layer equilibrium</button></p>
             <p><button onclick="generate_preset_simulation('nitrogen dioxide')">Nitrogen dioxide equilibrium</button></p>
             <p><button onclick="generate_preset_simulation('hydrogen iodide equilibrium')">Hydrogen iodide equilibrium</button></p>
-            <p><button onclick="generate_preset_simulation('combustion - H2 and O2')">Oxygen and hydrogen combustion</button></p>
+            <p><button onclick="generate_preset_simulation('combustion - H2 and O2 basic')">Oxygen and hydrogen combustion</button></p>
             <hr width="50%" align="center" color="grey" size="2">
             <p><label class="switchToggle"><input type="checkbox" id="togglePresetsOverwriteParams"><span class="sliderToggle round"></span></label> Overwrite all parameters if possible</p>
         </div>       
@@ -50,25 +50,31 @@
         <!-- Note: Values will be overrriden by global values when main.js is loaded. -->
         <div id="sidebarControls" class="sidebarRight">
             <p>
-                <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
-                <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="activate_run_pause_button()">⏯️ Run/Pause</button>
+                <button class="buttonSimControl" onclick="activate_step_button()">1️⃣ Step</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">↩️ Reset</button>
             </p>
             <hr width="50%" align="center" color="grey" size="2">
-            <div id="toolbar" class="slidecontainer">
-            <ul>            
-                <li>These below require the simulation to be reset.</li>
+            
+            <p>
+            <strong>Current statistics</strong></br>
+            Molecules: <span id="textFieldCurrentNumMolecules"></span></br>
+            Temperature: <span id="textFieldCurrentTemperature"></span> K</br>
+            Volume: <span id="textFieldCurrentVolume"></span> nm²</br>
+            </p>
+            
+            <hr width="50%" align="center" color="grey" size="2">
+            <div id="toolbar" class="slidecontainer">            
+            <ul>
+                <li>Note: Some settings require the simulation to be reset.</li>
                 <li>
                     One pixel equals: <span id="textFieldLengthScale"></span> pm.
-                    <input type="range" min="5" max="30" value="10" class="slider" id="sliderLengthScale">
+                    <input type="range" min="5" max="30" step="1" value="10" class="slider" id="sliderLengthScale">
                 </li>
                 
-                <hr width="50%" align="center" color="grey" size="2">
-                
-                <li>These below updates dynamically.</li>
                 <li>
                     Sim speed: <span id="textFieldTimeDelta"></span> fs per step.
-                    <input type="range" min="10.0" max="100.0" value="10.0" step="10.0" class="slider" id="sliderTimeDelta">
+                    <input type="range" min="10.0" max="100.0" step="10.0" value="10.0" class="slider" id="sliderTimeDelta">
                 </li>                
                 
                 <li>
@@ -76,15 +82,23 @@
                     <input type="range" min="10" max="1000" value="300" step="10" class="slider" id="sliderWorldTemperature">
                 </li>
                 
-                <li><label class="switchToggle"><input type="checkbox" id="toggleDoHeatExchange"><span class="sliderToggle round"></span></label> Do  heat exchange at wall boundaries</li>
+                <li>
+                    <label class="switchToggle"><input type="checkbox" id="toggleDoHeatExchange"><span class="sliderToggle round"></span></label>
+                    Do heat exchange with outside world when a molecule collides with simulation boundaries
+                </li>
                 
-                <li><label class="switchToggle"><input type="checkbox" id="toggleUpdateSimWindow"><span class="sliderToggle round"></span></label> Show atom movements</li>                
+                <li>
+                    <label class="switchToggle"><input type="checkbox" id="toggleUpdateSimWindow"><span class="sliderToggle round"></span></label> Show/hide atom movements
+                </li>
             </ul>
             </div>
             
             <hr width="50%" align="center" color="grey" size="2">
             <div id="divPhotonEmitterIntensity" class="divDynamicBox">
-                <p>UV intensity: <span id="textFieldPhotonEmitterIntensity"></span></p>
+                <p>
+                <span id="textFieldPhotonEmitterDescription"></span>
+                Intensity: <span id="textFieldPhotonEmitterIntensity"></span>
+                </p>
                 <input type="range" min="-0.1" max="3.0" value="1.0" step="0.1" class="slider" id="sliderPhotonEmitterIntensity">
             </div>
 
@@ -92,9 +106,9 @@
 
         <div id="sidebarComposition" class="sidebarRight">
             <p>
-                <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
-                <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="activate_run_pause_button()">⏯️ Run/Pause</button>
+                <button class="buttonSimControl" onclick="activate_step_button()">1️⃣ Step</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">↩️ Reset</button>
             </p>
             <hr width="50%" align="center" color="grey" size="2">
         
@@ -138,9 +152,9 @@
         <!-- Sidebar for time-based analysis -->
         <div id="sidebarAnalysis0" class="sidebarRight">
             <p>
-                <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
-                <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="activate_run_pause_button()">⏯️ Run/Pause</button>
+                <button class="buttonSimControl" onclick="activate_step_button()">1️⃣ Step</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">↩️ Reset</button>
             </p>
             
             <hr width="50%" align="center" color="grey" size="2">
@@ -187,9 +201,9 @@
         <!-- Sidebar for bar-based analysis -->
         <div id="sidebarAnalysis1" class="sidebarRight">
             <p>
-                <button class="buttonSimControl" onclick="start_simulation()">▶ Start</button>
-                <button class="buttonSimControl" onclick="stop_simulation()">⏹ Stop</button>
-                <button class="buttonSimControl" onclick="restart_simulation()">⟳ Reset</button>
+                <button class="buttonSimControl" onclick="activate_run_pause_button()">⏯️ Run/Pause</button>
+                <button class="buttonSimControl" onclick="activate_step_button()">1️⃣ Step</button>
+                <button class="buttonSimControl" onclick="restart_simulation()">↩️ Reset</button>
             </p>
             <hr width="50%" align="center" color="grey" size="2">
             

@@ -178,12 +178,14 @@ class MoleculeLibrary {
 
         //Hydrogen-oxygen combustion.
         this.add_entry( "H•", ["H"], [[0.0,0.0]] );
-        this.set_molecule_colour("H•", "#fbec5d"); //Maize yellow.
+        this.set_molecule_colour("H•", "rgb(251,236,93)"); //Maize yellow.
         this.add_entry( "OH•", ["O","H"], [[5.8,0.0],[-91.2,0.0]] );
+        this.set_molecule_colour("OH•", "rgb(253,118,47)");
         this.add_entry( "O•", ["O"], [[0.0,0.0]] );
         this.set_molecule_colour("O•", "rgb(127,0,0)");
         this.add_entry( "H₂O₂", ["H","H","O","O"], [[81.7,94.7],[-81.7,-94.7],[73.8,0.0],[-73.8,0.0]] );
         this.add_entry( "HO₂•", ["H","O","O"], [[-87.9,-91.1],[-63.9,2.9],[69.4,2.9]] );        
+        this.set_molecule_colour("HO₂•", "rgb(254,74,31)");
 
         // Methane-ethane combustion
         this.add_entry( "C₂H₆", ["H","H","H","H","H","H","C","C"],
@@ -252,6 +254,17 @@ class Molecule {
         this.bIgnore = false;
     }
     
+    static check_NaN( mol ) {
+        if ( Number.isNaN( mol.v.x ) || Number.isNaN( mol.v.y ) ) {
+            mol.debug();
+            throw `Molecule ${mol.name} has a NaN linear velocity value!`
+        }
+        if ( Number.isNaN( mol.om ) ) {
+            mol.debug();
+            throw `Molecule ${mol.name} has a NaN rotational velocity value!`
+        }
+    }
+    
     // Reference the matching molecular properties from the Library.
     sync_molecular_properties(moltype) {
         if ( undefined === moltype )  { throw "ERROR: sync_molecular_properties is not given an molecule type!"; }
@@ -289,7 +302,7 @@ class Molecule {
         } else {
             return this.rotI * this.om + this.mass * Vector2D.cross( this.p.subtract(pRef), this.v ) ;
         }
-    }   
+    }
     
     debug() {
         const entries = Object.entries(this);
@@ -316,7 +329,7 @@ class Molecule {
         switch ( globalVars.moleculeColourScheme ) {
             case 'atom':
                 for (let i = 0; i < this.nAtoms; i++) {
-                    const off = this.atomOffsets[i].rotate( this.th );
+                    const off = Vector2D.rotate( this.atomOffsets[i], this.th );
                     const xPos = (this.p.vec[0] + off.vec[0])/globalVars.lengthScale ;
                     const yPos = (this.p.vec[1] + off.vec[1])/globalVars.lengthScale ;
                     const radius = this.atomRadii[i]/globalVars.lengthScale;                    
@@ -336,7 +349,7 @@ class Molecule {
                 ctxLoc.lineWidth = 1;
                 ctxLoc.strokeStyle = '#221100';
                 for (let i = 0; i < this.nAtoms; i++) {
-                    const off = this.atomOffsets[i].rotate( this.th );
+                    const off = Vector2D.rotate( this.atomOffsets[i], this.th );                    
                     const xPos = (this.p.vec[0] + off.vec[0])/globalVars.lengthScale ;
                     const yPos = (this.p.vec[1] + off.vec[1])/globalVars.lengthScale ;
                     const radius = this.atomRadii[i]/globalVars.lengthScale;

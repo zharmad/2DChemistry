@@ -114,6 +114,12 @@ class Vector2D {
     static dot( v1, v2 ) { return v1.vec[0] * v2.vec[0] + v1.vec[1] * v2.vec[1]; }
     static dist( v1, v2 ) { return Math.sqrt( Vector2D.dist2( v1, v2 ) ); }
     static dist2( v1, v2 ) { return (v2.vec[0]-v1.vec[0])*(v2.vec[0]-v1.vec[0]) + (v2.vec[1]-v1.vec[1])*(v2.vec[1]-v1.vec[1]) };
+    static atan2( unit ) { return Math.atan2( unit.vec[1], unit.vec[0] ); }
+    static rotate( v, th ) {
+        let x = v.vec[0] * Math.cos(th) - v.vec[1] * Math.sin(th) ;
+        let y = v.vec[0] * Math.sin(th) + v.vec[1] * Math.cos(th) ;
+        return new Vector2D( x, y );
+    }
     
     static UnitVector( theta ){ return new Vector2D( Math.cos(theta), Math.sin(theta) ); }
     
@@ -127,6 +133,11 @@ class Vector2D {
     scale( s ) { this.vec[0] *= s; this.vec[1] *= s; }    
     incr( v ) { this.vec[0] += v.vec[0] ; this.vec[1] += v.vec[1]; }
     decr( v ) { this.vec[0] -= v.vec[0] ; this.vec[1] -= v.vec[1]; }        
+    rotate( th ) {
+        let x = this.vec[0] * Math.cos(th) - this.vec[1] * Math.sin(th) ;
+        let y = this.vec[0] * Math.sin(th) + this.vec[1] * Math.cos(th) ;
+        this.vec[0] = x; this.vec[1] = y;
+    }
 
     sincr( s, v ) {
         this.vec[0] += s * v.vec[0];
@@ -135,14 +146,9 @@ class Vector2D {
     
     add( v ) {
         return new Vector2D(this.vec[0] + v.vec[0], this.vec[1] + v.vec[1]);
-    }    
+    }
     subtract( v ) {
         return new Vector2D(this.vec[0] - v.vec[0], this.vec[1] - v.vec[1]);
-    }
-    rotate( th ) {
-        let x = this.vec[0] * Math.cos(th) - this.vec[1] * Math.sin(th) ;
-        let y = this.vec[0] * Math.sin(th) + this.vec[1] * Math.cos(th) ;
-        return new Vector2D( x, y );
     }
     
     norm2() { return this.vec[0] * this.vec[0] + this.vec[1] * this.vec[1]; }

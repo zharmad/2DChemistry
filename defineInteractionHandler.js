@@ -292,8 +292,8 @@ class InteractionHandler {
             let bCheck = ( bFlip ) ? entry.check_angles_general( mol2, mol1, obj.pContact ) : entry.check_angles_general( mol1, mol2, obj.pContact );
             if ( !(bCheck) ) { continue; }
             // Do reaction. Should be successful now.
-            //console.log(`Collision between ${mol1.name} & ${mol2.name}, reaction success.`);
-            if ( bFlip ) { obj.swap_molecules( 0, 1 ); }                        
+            //console.log(`Step ${sim.timestep}: Collision between ${mol1.name} & ${mol2.name}, reaction success.`);
+            if ( bFlip ) { obj.swap_molecules( 0, 1 ); }
             return entry.process_reaction( obj );
         }
         // Elastic collision exit point for molecules that could react but have failed above checks.
@@ -511,6 +511,16 @@ class molSystem {
         this.vRel[j] = temp;        
     }
     
+    rotate_system( th ) {     
+        const pCOM = this.p;
+        for ( let i = 0; i < this.nMol; i++ ) {
+            let mol = this.arrMol[i];          
+            this.pRel[i].rotate( th );
+            mol.p.set_to( pCOM.add( this.pRel[i] ) );
+            mol.th += th;
+        }
+    }
+    
     /* More detailed collision checks. Either returns false or returns the position of contact. */
     // Must be called after creation.
     confirm_molecule_collision() {
@@ -523,8 +533,8 @@ class molSystem {
         }
         const p1 = mol1.p, p2 = mol2.p, pa1 = new Vector2D(0,0), pa2 = new Vector2D(0,0);
         const o1 = [], o2 = [], r1 = [], r2 = [];
-        mol1.atomOffsets.forEach( x => { o1.push( x.rotate(mol1.th) ) } );
-        mol2.atomOffsets.forEach( x => { o2.push( x.rotate(mol2.th) ) } );
+        mol1.atomOffsets.forEach( x => { o1.push( Vector2D.rotate( x, mol1.th ) ) } );
+        mol2.atomOffsets.forEach( x => { o2.push( Vector2D.rotate( x, mol2.th ) ) } );
         mol1.atomRadii.forEach( x => { r1.push( x ) } );
         mol2.atomRadii.forEach( x => { r2.push( x ) } );        
         for (let i = 0; i < n1; i++) {
@@ -893,14 +903,25 @@ class reactionTransfer extends reaction {
         // Compute momentum to be transferred via a delta-v directly between molecules.
         const dp = mol2.p.subtract( mol1.p ).unit();
         const dv = dp.scaled_copy( Vector2D.dot( mol1.v, dp ) - Vector2D.dot( mol2.v, dp ) );
-        
         // Now enact an elastic collision.
         obj.resolve_collision();        
-        //NB: It's likely that some rotational momentunma nd energy might be lost when one partner becomes a monoatomic molecule.
-        const mNew1 = this.moleculeLibrary.create_molecule( this.products[0], { p: obj.p.copy(), om: mol1.om });
-        const mNew2 = this.moleculeLibrary.create_molecule( this.products[1], { p: obj.p.copy(), om: mol2.om });
+        
+        // Determine offsets as necessary
+        if ( this.angleReactionOffset != 0.0 ) { obj.rotate_system( this.angleReactionOffset ); }
+        const thNew = Vector2D.atan2( dp ) + this.angleReactionOffset;
+        //NB: It's likely that some rotational momentunm and energy might be lost when one partner becomes a monoatomic molecule.        
+        const mNew1 = this.moleculeLibrary.create_molecule( this.products[0], {
+            p: mol1.p.copy(),
+            th: thNew + this.productAngles[0],
+            om: mol1.om,
+        });
+        const mNew2 = this.moleculeLibrary.create_molecule( this.products[1], {
+            p: mol2.p.copy(),
+            th: thNew + Math.PI + this.productAngles[1],
+            om: mol2.om,
+        });
         //console.log(`Products ${mNew1.name} and ${mNew2.name} have been created.`);
-        this.assign_new_positions_2mol( mNew1, mNew2, obj.p, Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) );
+        //this.assign_new_positions_2mol( mNew1, mNew2, obj.p, Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) );
         // mNew1.p.sincr( 1.01 * mNew1.get_size(), obj.pRel[1].unit() );
         // mNew2.p.sincr( 1.01 * mNew2.get_size(), obj.pRel[0].unit() );
         // const theta = Math.atan2( obj.pRel[1][1], obj.pRel[1][0] ) + this.angleReactionOffset;
@@ -912,7 +933,7 @@ class reactionTransfer extends reaction {
         if ( Number.isNaN ( sysNew.get_total_energy_from_mols() ) ) { throw "NaN detected!"; }
         //Enact COM-aligned momentum transfer post elastic-collision. Assume that mass is lost by the first molecule and equal mass is gained by the second.
         if ( true ) {
-            const mDiff = mol1.mass - mNew1.mass;
+            const mDiff = Math.abs(mol1.mass - mNew1.mass);
             mNew1.v.set_to( Vector2D.weighted_sum( mol1.mass, mol1.v, -mDiff, dv ) );
             mNew1.v.scale( 1.0/mNew1.mass );
             mNew2.v.set_to( Vector2D.weighted_sum( mol2.mass, mol2.v, mDiff, dv ) );
@@ -943,7 +964,6 @@ class reactionTransfer extends reaction {
  
     }    
     
-    //process_reaction_flipped();
 }
 
 /*
@@ -1019,18 +1039,18 @@ function get_new_preset_gas_reactions( args ) {
             arrReactions.forEach( r => { gr.parse_input_reaction( r ); });
             break;        
 
-        case 'combustion - H2 and O2':
-            arrReactions = globalVars.presetReactions[ "combustion - H2 and O2" ];
+        case 'combustion - H2 and O2 basic':
+            arrReactions = globalVars.presetReactions[ "combustion - H2 and O2 basic" ];
             arrReactions.forEach( r => { gr.parse_input_reaction( r ); });
             break;
 
-        case 'combustion - H2 and O2 adv.':
-            arrReactions = globalVars.presetReactions[ "combustion - H2 and O2" ];
+        case 'combustion - H2 and O2 advanced':
+            arrReactions = globalVars.presetReactions[ "combustion - H2 and O2 advanced" ];
             arrReactions.forEach( r => { gr.parse_input_reaction( r ); });
-            arrReactions = globalVars.presetReactions[ "ozone layer formation" ];
+            //arrReactions = globalVars.presetReactions[ "ozone layer formation" ];
+            //arrReactions.forEach( r => { gr.parse_input_reaction( r ); });                        
+            arrReactions = globalVars.presetReactions[ "combustion - H2 and O2 basic" ];
             arrReactions.forEach( r => { gr.parse_input_reaction( r ); });            
-            arrReactions = globalVars.presetReactions[ "combustion - H2 and O2 adv." ];
-            arrReactions.forEach( r => { gr.parse_input_reaction( r ); });
             break;
             
         case 'combustion - hydrocarbon':

@@ -29,21 +29,29 @@ class Simulation {
         
         this.timeFactor = 0.001; // Convert time units from picoseconds, by default to femtoseconds.
         this.lengthScale  = 10; // Convert spatial units. Currently used to convert pm to pixels.        
-        
-        //Graphical interface
-        this.graphicalContext = null ;
+
         this.xBounds = new Vector2D(0, 1);
         this.yBounds = new Vector2D(0, 1);
+        this.xMaxTarget = undefined;
+        this.xWallVelNominal  = 0.1; //The nominal scalar value of the velocity if the volume needs changing.
+        this.xWallVel = 0; //The wall velocity seen by molecules when colliding with the shifting boundary.
+                
+        //Graphical interface
+        this.graphicalContext = null ;        
         this.refreshAlpha = 0.4 ;
-        this.bDrawMolecules = true;
+        this.bDrawMolecules = true;        
         
         // Accounting features.
+        this.currentTemperature = undefined;
+        
+        this.objTextFields = {}; //Object of HTML span references that can be filled later.
+        
         // Designed to be exportable directly to Chart.JS. Constructor does not know about its contents.
         // Default to current composition for now.
         this.chartDoughnutGr = undefined;        
         this.chartBarGr = undefined;       
         this.chartLineGr1 = undefined;
-        this.chartLineGr2 = undefined;
+        this.chartLineGr2 = undefined;               
         
         // TODO: Hookup with the dynamic component registry and create a single trajectory data object for use in plotting and export.
         /*
@@ -92,8 +100,8 @@ class Simulation {
     set_bool_heat_exchange( bool ) { this.bHeatExchange = bool; }
     get_bool_heat_exchange() { return this.bHeatExchange; }
     set_bool_draw_molecules( bool ) { this.bDrawMolecules = bool; }
-    set_world_length_scale( x ) { this.scaleLength = x ; }
-    get_world_length_scale() { return this.scaleLength; }
+    set_world_length_scale( x ) { this.lengthScale = x ; }
+    get_world_length_scale() { return this.lengthScale; }
     set_world_time_factor( x ) { this.timeFactor = x ; }
     get_world_time_factor() { return this.timeFactor; }  
     
@@ -109,8 +117,9 @@ class Simulation {
     set_statistics_update_interval( x ) { this.statsUpdateInterval = x; }
     set_system_zero_interval( x ) { this.systemZeroInterval = x; }
     set_world_boundaries( xMax, yMax ) {
-        this.xBounds[1] = xMax * this.scaleLength;
-        this.yBounds[1] = yMax * this.scaleLength;
+        this.xBounds[1] = xMax * this.lengthScale;
+        this.yBounds[1] = yMax * this.lengthScale;
+        this.xMaxTarget = this.xBounds[1];
     }
     
     update_values_from_globals() {
@@ -270,6 +279,9 @@ class Simulation {
             this.create_data_frame_entry( name, name, colour );
         });        
 
+        //Initial setup of data.
+        this.push_current_stats();
+        
         //Synchronise and set up graph data.
         this.bSet = true;
         console.log(`Build complete. Created ${this.nMolecules} molecules.`);
@@ -284,8 +296,10 @@ class Simulation {
         this.gasComp.normalise();    
         
         this.build_simulation();
-        this.draw_background(1.0);
-        this.draw();
+
+        this.draw_background(1.0);        
+        this.draw_all_new();
+        //this.draw();
         
         this.timestep    = 0;
         this.timeElapsed = 0.0;
@@ -313,11 +327,24 @@ class Simulation {
     draw_background( alpha ) {
         if ( alpha === undefined ) { alpha = this.refreshAlpha; }
         const ctxLoc = this.graphicalContext ;
-        ctxLoc.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-        ctxLoc.fillRect(0, 0, widthSim, heightSim);
-        ctxLoc.lineWidth = 2;
-        ctxLoc.strokeStyle = '#221100';
-        ctxLoc.strokeRect(0, 0, widthSim, heightSim);        
+        const wWindow = ctxLoc.canvas.width, hWindow = ctxLoc.canvas.height;
+        const wSim = this.xBounds[1] / this.lengthScale;
+        if ( wSim >= wWindow ) {
+            //Simulation at maximum possible extent.
+            ctxLoc.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctxLoc.fillRect(0, 0, wWindow, hWindow);
+            ctxLoc.lineWidth = 2;
+            ctxLoc.strokeStyle = '#221100';
+            ctxLoc.strokeRect(0, 0, wWindow, hWindow);
+        } else {
+            ctxLoc.fillStyle = `rgb(24,24,24)`;
+            ctxLoc.fillRect(wSim, 0, wWindow, hWindow);            
+            ctxLoc.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+            ctxLoc.fillRect(0, 0, wSim, hWindow);
+            ctxLoc.lineWidth = 2;
+            ctxLoc.strokeStyle = '#221100';
+            ctxLoc.strokeRect(0, 0, wSim, hWindow);            
+        }
         //Draw on the back of canvas.
         //context.globalCompositeOperation = 'destination-over';
         //Draw on the front again
@@ -349,9 +376,9 @@ class Simulation {
             xPos[name] = []; yPos[name] = []; rads[name] = [];
             colours[name] = this.moleculeLibrary.get_entry(name).molColour;
         }
-        for (const mol of this.molecules) {            
+        for (const mol of this.molecules) {
             for (let i = 0; i < mol.nAtoms; i++) {
-                const off = mol.atomOffsets[i].rotate( mol.th );                
+                const off = Vector2D.rotate( mol.atomOffsets[i], mol.th );                
                 xPos[mol.name].push( (mol.p.x + off.x) / globalVars.lengthScale );
                 yPos[mol.name].push( (mol.p.y + off.y) / globalVars.lengthScale );
                 rads[mol.name].push( mol.atomRadii[i] / globalVars.lengthScale );
@@ -426,7 +453,10 @@ class Simulation {
         }
         
         /* Account for additions and subtractions here. */
-        if ( arrDel.length > 0 ) { this.resolve_molecule_changes( arrAdd, arrDel ); }
+        if ( arrDel.length > 0 ) {
+            this.resolve_molecule_changes( arrAdd, arrDel );
+            //stop_simulation();
+        }
     }
     
     step() {
@@ -448,11 +478,12 @@ class Simulation {
             }
         } 
         /* Account for additions and subtractions here. */
-        if ( arrDel.length > 0 ) { this.resolve_molecule_changes( arrAdd, arrDel ); }        
+        if ( arrDel.length > 0 ) {
+            this.resolve_molecule_changes( arrAdd, arrDel );
+            //stop_simulation();
+        }
                 
         // Simple movement
-        //this.draw();
-        if( this.bDrawMolecules ) { this.draw_all_new(); }        
         for (const mol of this.molecules) {
             mol.update_position( dt );
         }
@@ -473,17 +504,26 @@ class Simulation {
             // }
         // }
         
+        // Shift wall boundaries if required.
+        // NB: Le Chatelier's Principle and pressure effects are very difficult to discern within the normal bounds of the simulation.
+        // I believe that the reason is this: the collision rate needs to change by ~an order of magnitude in order to have any noticeable shift in the equilibrium of gases. This means simulation times that are not really practical when trying to maintain adequate collision detection rates.
+        if ( this.xMaxTarget > this.xBounds[1] ) {
+            this.xWallVel = this.xWallVelNominal ;
+            this.xBounds[1] += this.xWallVelNominal * this.dt;
+            if ( this.xMaxTarget < this.xBounds[1] ) { this.xBounds[1] = this.xMaxTarget; } 
+        } else if ( this.xMaxTarget < this.xBounds[1] ) {
+            this.xWallVel = -this.xWallVelNominal;
+            this.xBounds[1] -= this.xWallVelNominal * this.dt;
+            if ( this.xMaxTarget > this.xBounds[1] ) { this.xBounds[1] = this.xMaxTarget; }             
+        } else {
+            this.xWallVel = 0;
+        }
+        
         // Resolve any collision with the walls.
         for (const mol of this.molecules) {
             //Shift molecules            
             this.process_wallBounce(mol);
         }       
-        
-        // inform downstream updaters
-        if ( this.timestep % this.statsUpdateInterval == 1 ) {
-            this.push_data_frame();
-            this.update_all_graphs();
-        }
         
         //Zero all angular momentum to reduce ice cude phenomenon. This now breaks strict energy conservation of the system.
         if ( this.timestep % this.systemZeroInterval == 1 ) {
@@ -499,6 +539,19 @@ class Simulation {
         for (let i = 0; i < this.nModules; i++ ) {
             this.modules[i].step_call();
         }        
+
+        // inform the graphical context.
+        if( this.bDrawMolecules ) { this.draw_all_new(); }        
+        
+        // inform fast updaters
+        this.push_current_stats();
+        
+        // inform slow updaters
+        if ( this.timestep % this.statsUpdateInterval == 1 ) {
+            this.push_data_frame();
+            this.update_all_graphs();
+        }
+                
     }
 
     debug() {
@@ -517,16 +570,19 @@ class Simulation {
     process_wallBounce(mol) {
         const xBounds = this.xBounds, yBounds = this.yBounds;
         const s = mol.size, p = mol.p, v = mol.v ;
-        let bCollide = false ;
-        if ( p.x - s < xBounds.x ) {
+        let bCollide = false, bMovingWall = false;
+        if ( p.x - s < xBounds[0] ) {
             v.x = -v.x;
-            p.x += 2.0*( s + xBounds.x - p.x );
+            p.x += 2.0*( s + xBounds[0] - p.x );
             bCollide = true;
         }
-        if ( p.x + s > xBounds.y) {
-            v.x = -v.x;
-            p.x += 2.0*( xBounds.y -p.x - s );
+        
+        // This is the boundary that can move. Add additional component from an infinitely heavier wall collision.
+        if ( p.x + s > xBounds[1]) {
+            v.x = -v.x ;
+            p.x += 2.0*( xBounds[1] -p.x - s );
             bCollide = true;
+            bMovingWall = true;
         }
 
         if ( p.y - s < yBounds.x) {
@@ -545,14 +601,17 @@ class Simulation {
         A values of 1.38 leads to the following:
             - 200 molecules in 303nm^2 box gives 292K.
             - 500 molecules in 303nm^2 box gives 300K.
-        This confirms that the constant will depend on density, i.e. collision rate between molecules.
+        This confirms that the constant will have a small dependence on density, i.e. collision rate between molecules.
         */
         if ( this.bHeatExchange && bCollide ) {
             // mol.resample_speed( this.temperature * 1.26 );
             // mol.resample_omega( this.temperature * 1.26 );
             mol.resample_speed( this.temperature * 1.38 );
+            //mol.resample_speed( this.temperature );
             mol.resample_omega( this.temperature );            
         }
+        
+        if ( bMovingWall ) { mol.v.x += 2.0 * this.xWallVel } 
     }
     
     /* General analysis functions*/
@@ -683,10 +742,28 @@ class Simulation {
         this.dataFrame[key] = { label: label, data: [], backgroundColor: BGColour }        
     }
     
-    // 
+    link_current_stats_text_fields( args ) {
+        this.objTextFields['temperature'] = args['temperature'];
+        this.objTextFields['volume'] = args['volume'];
+        this.objTextFields['numMolecules'] = args['numMolecules'];
+    }
+        
+    push_current_stats() {
+        this.currentTemperature = this.get_temperature();
+        this.objTextFields['temperature'].innerHTML = this.currentTemperature.toFixed(0);
+        this.objTextFields['volume'].innerHTML = (this.get_volume()*1e-6).toFixed(0) ;
+        this.objTextFields['numMolecules'].innerHTML = this.nMolecules ;
+        // Inefficient, but doesn't worry about undefined items.
+        //for (const [k, obj] of Object.entries( this.objTextFields ) ) {
+            //console.log(`${k} -> ${o}`)
+        //    switch( k )
+        //}
+    }
+    
+    // Where possible, assume that push current stats has already been called as it's a slower set of data.
     push_data_frame() {
         const t = this.timeElapsed;
-        this.dataFrame['temperature'].data.push( [ t, this.get_temperature() ] );
+        this.dataFrame['temperature'].data.push( [ t, this.currentTemperature ] );
         const n = this.moletypeNames.length;       
         let name = undefined, count = undefined;
         for ( let i = 0; i < n; i++ ) {
@@ -710,17 +787,24 @@ class Simulation {
     }
     
     sync_bar_graph( arr ) {
-        if ( undefined === arr ) { arr = ['velocities']; }
+        if ( undefined === arr ) { arr = ['energies']; }
         const d = this.chartBarGr.data ; const n = arr.length;
         for ( let i = 0; i < n; i++ ) {
             switch ( arr[i] ) {
                 case 'velocities':
                     d.datasets[i] = {
-                        label: 'velocities (pm/fs)',
+                        label: 'velocities (pm fs⁻¹)',
                         data: [],
                         backgroundColor: 'rgb(72,  96, 128)'
                     }
                     break;
+                case 'energies':
+                    d.datasets[i] = {
+                        label: 'energies (kJ mol⁻¹)',
+                        data: [],
+                        backgroundColor: 'rgb(72,  96, 128)'
+                    }
+                    break;                    
                 default:
                     throw `Bar graph type ${arr[i]} is not recognised!`;
             }
@@ -760,9 +844,9 @@ class Simulation {
         var meanVal = 0.0;
         var temp = undefined ;     
         for (const mol of this.molecules) {
-            //temp = mol.get_kinetic_energy() + mol.get_rotational_energy();
+            temp = mol.get_total_energy();
             //temp = mol.get_kinetic_energy();
-            temp = mol.v.norm();
+            //temp = mol.v.norm();
             arrVal.push( temp );
             //maxVal = Math.max( maxVal, temp );
             meanVal += temp;
@@ -846,7 +930,9 @@ class PhotonEmitterModule {
         this.maxLambda = undefined; //Used for solar
         this.minLambda = undefined; //Used for solar
         this.avgLambda = undefined; //Used for single and spectrum.
-        this.sigLambda = undefined; //Used for spectrum. In nm.
+        this.sigLambda = undefined; //Used for spectrum. In nm.        
+        this.molNamesReaction = undefined; //Allow initiator to define the types of molecules that are allowed to be hit by the photon.
+        this.photonColour = undefined;
         
         this.set_emitter_model( args );
         
@@ -856,7 +942,7 @@ class PhotonEmitterModule {
 
         this.pFraction = 0.0;
         
-        this.reset_photons();
+        this.reset_photons();        
         
         // Formula to convert wavelength to energy.
         // 2.998e8 * 6.626e-34 * 6.02214e23 * 1e6 -> kJ nm / mol
@@ -871,6 +957,7 @@ class PhotonEmitterModule {
         this.funcCollRadii = {
             "O₂": PhotonEmitterModule.collision_radii_func_O2,
             "O₃": PhotonEmitterModule.collision_radii_func_O3,
+            "I₂": PhotonEmitterModule.collision_radii_func_I2,
         }
     }
 
@@ -883,19 +970,75 @@ class PhotonEmitterModule {
     
     /*
         Add fixed collision cross-section functions based on wavelength.
+        1e-18 cm^2 = 100 pm^2. Then square root ( A / PI) to get radii in order to drop down to 2D.
+        1 FWHM ~= 2.355 sigma.
+        In general, searching for the terms (photo)absorption, photolysis, photodissociation, collision, and/or cross-section should be be useful when looking for the relevant raw data of new species. Should watch out that it is for gas phase data.
     */
-    // Imitating spectra found in Itikawa et al. (1989), DOI: 10.1063/1.555841
+    // Imitating UV spectra found in Itikawa et al. (1989), DOI: 10.1063/1.555841
     static collision_radii_func_O2( l ) { return Math.sqrt( 1150 * gaussian(l, 140, 20) / Math.PI); }
     
-    // Imitating the absorption spectra found in Qu et al. (2015), DOI: 10.1063/1.2001650
+    // Imitating the UV absorption spectra found in Qu et al. (2015), DOI: 10.1063/1.2001650
     // Use gaussian function: max 1140 pm^2 -> 19 pm in radii. Center of gaussian at 255 nm, with ~17 nm sigma.
     static collision_radii_func_O3( l ) { return Math.sqrt( 1140 * gaussian(l, 255, 17) / Math.PI); }
     
-    
+    // Imitating the visual absorption spectra found in Saiz-Lopez et al. (2004), DOI: 10.5194/acp-4-1443-2004
+    // NB: The UV band is ignored. The additional vibrational peaks in the green-band is also ignored for simplicity.
+    static collision_radii_func_I2( l ) { return Math.sqrt( 310 * gaussian(l, 525, 34) / Math.PI); }
+    // For the UV absorption of HI, see: Brion et al. (2005), DOI: 10.1016/j.elspec.2005.01.010
+
+    /*
+        Sources: https://stackoverflow.com/questions/3407942/rgb-values-of-visible-spectrum
+            Also see older linear approximation by Prof. Bruton: http://www.midnightkite.com/color.html            
+    */    
+    static convert_wavelength_to_RGBcolour( l ) {
+        let t = 0.0, r = 0.0, g = 0.0, b = 0.0;
+        if ( l < 400.0 || l > 700 ) { return 'rgb(0,0,0)'; }
+        // Determine RGB components separately by three if-chain statements.
+        if ( l < 410.0 ) {
+            t=(l-400.0)/(410.0-400.0); r=    +(0.33*t)-(0.20*t*t);
+        } else if ( l < 475.0 ) {
+            t=(l-410.0)/(475.0-410.0); r=0.14         -(0.13*t*t);
+        } else if ( l < 545.0 ) {            
+            r = 0.0;
+        } else if ( l < 595.0 ) {
+            t=(l-545.0)/(595.0-545.0); r=    +(1.98*t)-(     t*t);
+        } else if ( l < 650.0 ) {
+            t=(l-595.0)/(650.0-595.0); r=0.98+(0.06*t)-(0.40*t*t);
+        } else {
+            t=(l-650.0)/(700.0-650.0); r=0.65-(0.84*t)+(0.20*t*t);
+        }        
+        //Green band.
+        if ( l < 415.0 ) {
+            g = 0.0;
+        } else if ( l < 475.0 ) {
+            t=(l-415.0)/(475.0-415.0); g=             +(0.80*t*t);
+        } else if ( l < 590.0 ) {
+            t=(l-475.0)/(590.0-475.0); g=0.8 +(0.76*t)-(0.80*t*t);
+        } else if ( l < 639.0 ) {
+            t=(l-585.0)/(639.0-585.0); g=0.84-(0.84*t)           ;
+        }
+        // Blue band.
+        if ( l < 475.0 ) {
+            t=(l-400.0)/(475.0-400.0); b=    +(2.20*t)-(1.50*t*t);
+        } else if ( l < 560.0 ) {
+            t=(l-475.0)/(560.0-475.0); b=0.7 -(     t)+(0.30*t*t);
+        }
+
+        // Report output as string.
+        r=Math.floor(r*255.9999); g=Math.floor(g*255.9999); b=Math.floor(b*255.9999);
+        return `rgb(${r},${g},${b})`;
+    }
+
     set_emitter_model( args ) {
         //if ( undefined === args ) { throw "Photon Emitter setup needs a model with relevant arguments!"; }
+        
+        if ( undefined == args.molNamesReaction ) {
+            // E.g.: [ "O₂", "O₃" ]
+            throw "ERROR: Photon Emitter is missing an array of molecule names that are allowed to be hit by the photon. This is given to the argument molNamesReaction."
+        }
+        this.molNamesReaction = args.molNamesReaction;
         if ( undefined === args.model ) { args.model = 'single'; }
-        this.model = args.model;
+        this.model = args.model;        
         if ( undefined === args.avgLambda ) { args.avgLambda = 210; }
         if ( undefined === args.sigLambda ) { args.sigLambda =  20; }
         if ( undefined === args.minLambda ) { args.minLambda = 100; }
@@ -906,14 +1049,21 @@ class PhotonEmitterModule {
                 break;
             case 'gaussian':
                 this.avgLambda = args.avgLambda;
-                this.avgLambda = args.avgLambda;
+                this.sigLambda = args.sigLambda;
                 break;
             case 'solar':
                 this.minLambda = args.minLambda;
                 this.maxLambda = args.maxLambda;
+                this.avgLambda = 0.5*(args.maxLambda+args.minLambda);
                 break;
             default:
                 throw `Unknown model give to Photon emitter! ${this.model}`;
+        }
+
+        if ( undefined === args.photonColour ) {
+            this.photonColour = PhotonEmitterModule.convert_wavelength_to_RGBcolour( this.avgLambda );
+        } else {
+            this.photonColour = args.photonColour ;
         }
 
     }
@@ -924,8 +1074,9 @@ class PhotonEmitterModule {
     calc_photon_energy( l ) { return this.eFactor / l }; // in kJ/mol
     calc_photon_momentum( l ) { return this.mvFactor / l }; // in amu pm fs^-1
     
+    // Not currently used. Reserved for future removal of hard-coded functions.
     calc_collision_radii( molName, l ) {
-        
+        //Do nothing
     }
     
     sample_photon_spectrum() {
@@ -972,7 +1123,7 @@ class PhotonEmitterModule {
         }
         
         //Do only for ozone layer equilbrium for now.
-        const molNamesReaction = [ "O₂", "O₃" ];
+        const molNamesReaction = this.molNamesReaction;
         //Determine potential collisions again. Make list of atoms in the path of each photon.
         const mols = this.host.molecules;
         const nMols = this.host.nMolecules;      
@@ -1004,8 +1155,9 @@ class PhotonEmitterModule {
             mol.v.y += this.calc_photon_momentum( LPhoton[j] ) / mol.mass;
             const RE    = mol.get_rotational_energy();
             const RENew = RE + this.calc_photon_energy( LPhoton[j] );
-            mol.om *= Math.sqrt(RENew/RE);            
-            //console.log( mol.name, mol.v.y, mol.om );
+            
+            mol.om = ( RE > 0.0 ) ? mol.om * Math.sqrt(RENew/RE) : Math.sqrt( 2.0 * RENew / mol.rotI );
+            //Molecule.check_NaN( mol );
 
         }
         // Molecules hit should now contain sufficient rotational energy for decomposition reactions down the track.
@@ -1031,7 +1183,7 @@ class PhotonEmitterModule {
         const n = this.numPhotons;
         ctx.beginPath();
         ctx.lineWidth = 1;
-        ctx.strokeStyle = 'rgb(255,0,255)'; // Hot-pink magenta rays with width 1.
+        ctx.strokeStyle = this.photonColour;
         for ( let i = 0; i < n; i++ ) {
             ctx.moveTo( this.posXPhoton[i]/globalVars.lengthScale, 0 );
             ctx.lineTo( this.posXPhoton[i]/globalVars.lengthScale, this.posYPhoton[i]/globalVars.lengthScale );
@@ -1040,4 +1192,12 @@ class PhotonEmitterModule {
         //ctx.closePath();
         ctx.stroke();
     }
+}
+
+/*
+    Handles some of the additional manipulations and drawing of volume controls.
+    Not all simulation presets need to have its volume adjusted.
+*/
+class SimulationVolumeModule {
+    
 }
