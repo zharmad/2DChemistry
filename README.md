@@ -47,13 +47,15 @@ The units of measurements in this toy model include Kelvins (K), nano/picometers
 - Free determination of gas compositions and settings and reset.
 - Acceptable performance up to thousands of atoms on PC, and hundreds of atoms on mobile. (Would like another order of magnitude.)
 - Shows temperature and counts of species over time in a line graph, which can be directly exported as an image (HTML5 Canvas).
+- Displays reaction diagrams for each step of the reaction pathway.
 
 - (Partial) Easy workflow to pre-generate starting conditions for specific lessons as individual web pages.
 - (Partial) Control: User interface to adjust what each graph shows.
 
+- (Wishlist) Modify the reaction energies and watch responses. This will probably need a graph theory behind the scenes to ensure consistent energies.
 - (Wishlist) Control of simulation box area to model volume effects. (Currently on μVT and μVE conditions).
-- (Wishlist) Transparency: Depiction of 2D energy landscapes with drop-down menu.
 - (Wishlist) Control: User interface to add and remove molecules so as to simulate industrial steps, e.g. during the conversion of sulfur dioxide pollutant into useful sulfuric acid.
+
 - (Wishlist) Moddability: User interface to create molecuels and reactions of their own.
 - (Wishlist) Feature: Dedicate one wall for a surface catalyst. This enables Haber process catalysis and many others used in industry.
 
