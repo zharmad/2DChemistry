@@ -1,6 +1,6 @@
 # 2DChemistry
 
-An atom-based simulation engine; designed to help secondary to early-tertiary students understand core chemistry concepts and visualise common gas-phase natural phenomena & industrial applications.
+An atom-based simulation engine; designed to help secondary to early-tertiary students understand core chemistry concepts and visualise common gas-phase natural phenomena & industrial applications. A web demo is available at my GitHub Page: https://zharmad.github.io/2DChemistry/
 
 ## What this is for
 
@@ -34,7 +34,7 @@ In other words, this software has been written to succeed the pHET Reactions & r
 2. Everything is modelled like a gas with no long-range interactions. (In other words, it will be inefficient to force this engine to model liquids and solids.)
 3. Atoms and molecules are hard circles that undergo rigid-body collisions.
 4. Molecules are like-wise rigid bodies with fixed bonds. There are no internal vibrational motions.
-5. Energies barriers and transfers are one-tenth their real-world values. This vastly speeds up all process so they can be visualsed.
+5. Energies barriers and transfers are one-tenth their real-world values. This vastly speeds up all process so they can be visualised.
 6. No long range interactions such as electrostatics just yet.
 
 ### Note about units.
@@ -43,19 +43,22 @@ The units of measurements in this toy model include Kelvins (K), nano/picometers
 
 ## Current feature set
 
-- Set up any arbitrary gas composition and reaction pathways.
-- Free determination of gas compositions and settings and reset.
+- A set of example models, in which starting conditions can be freely modified:
+    - initial gas compositoin
+    - starting volumes and temperatures.
+- Dynamic adjustments of overall conditions:
+    - temperature for now. Volume is WIP, adding and removing species will be next.
 - Acceptable performance up to thousands of atoms on PC, and hundreds of atoms on mobile. (Would like another order of magnitude.)
-- Shows temperature and counts of species over time in a line graph, which can be directly exported as an image (HTML5 Canvas).
+- Basic analysis pipeline, with graphs that can be directly exported via the HTML5 Canvas interface.
+    - Aggregate measures: temperature, pressure, volume, density, etc.
+    - species count.
 - Displays reaction diagrams for each step of the reaction pathway.
 
 - (Partial) Easy workflow to pre-generate starting conditions for specific lessons as individual web pages.
 - (Partial) Control: User interface to adjust what each graph shows.
-
 - (Wishlist) Modify the reaction energies and watch responses. This will probably need a graph theory behind the scenes to ensure consistent energies.
 - (Wishlist) Control of simulation box area to model volume effects. (Currently on μVT and μVE conditions).
 - (Wishlist) Control: User interface to add and remove molecules so as to simulate industrial steps, e.g. during the conversion of sulfur dioxide pollutant into useful sulfuric acid.
-
 - (Wishlist) Moddability: User interface to create molecuels and reactions of their own.
 - (Wishlist) Feature: Dedicate one wall for a surface catalyst. This enables Haber process catalysis and many others used in industry.
 
