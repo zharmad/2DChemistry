@@ -45,19 +45,19 @@ The units of measurements in this toy model include Kelvins (K), nano/picometers
 
 - A set of example models, in which starting conditions can be freely modified:
     - initial gas compositoin
-    - starting volumes and temperatures.
+    - starting areas and temperatures.
 - Dynamic adjustments of overall conditions:
-    - temperature for now. Volume is WIP, adding and removing species will be next.
+    - Temperature for now. Area is WIP, adding and removing species will be next.
 - Acceptable performance up to thousands of atoms on PC, and hundreds of atoms on mobile. (Would like another order of magnitude.)
 - Basic analysis pipeline, with graphs that can be directly exported via the HTML5 Canvas interface.
-    - Aggregate measures: temperature, pressure, volume, density, etc.
+    - Aggregate measures: temperature, pressure, area, density, etc.
     - species count.
 - Displays reaction diagrams for each step of the reaction pathway.
 
 - (Partial) Easy workflow to pre-generate starting conditions for specific lessons as individual web pages.
 - (Partial) Control: User interface to adjust what each graph shows.
 - (Wishlist) Modify the reaction energies and watch responses. This will probably need a graph theory behind the scenes to ensure consistent energies.
-- (Wishlist) Control of simulation box area to model volume effects. (Currently on μVT and μVE conditions).
+- (Wishlist) Control of simulation box area to model area effects. (Currently on μVT and μVE conditions).
 - (Wishlist) Control: User interface to add and remove molecules so as to simulate industrial steps, e.g. during the conversion of sulfur dioxide pollutant into useful sulfuric acid.
 - (Wishlist) Moddability: User interface to create molecuels and reactions of their own.
 - (Wishlist) Feature: Dedicate one wall for a surface catalyst. This enables Haber process catalysis and many others used in industry.

@@ -309,7 +309,7 @@ sim.chartBarGr = chartBarGr;
 sim.link_current_stats_text_fields({
     numMolecules: document.getElementById("textFieldCurrentNumMolecules"),
     temperature: document.getElementById("textFieldCurrentTemperature"),
-    volume: document.getElementById("textFieldCurrentVolume"),
+    area: document.getElementById("textFieldCurrentArea"),
     //pressure: document.getElementById("textFieldCurrentPressure"),
 })
 
@@ -797,9 +797,6 @@ if ( controlsSidebar.widthOpen > 10 ) {
 } else {
     controlsSidebar.bOpen = false;
 }
-
-/* Webassembly import section */
-let collision_check_wasm = null;
 
 // const importObject = { imports: { imported_func: (arg) => console.log(arg) } };
 // WebAssembly.instantiateStreaming(fetch("distCheck.wasm"), importObject).then(

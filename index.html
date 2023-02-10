@@ -98,7 +98,7 @@
             <strong>Current statistics</strong></br>
             Molecules: <span id="textFieldCurrentNumMolecules"></span></br>
             Temperature: <span id="textFieldCurrentTemperature"></span> K</br>
-            Volume: <span id="textFieldCurrentVolume"></span> nm²</br>
+            Area: <span id="textFieldCurrentArea"></span> nm²</br>
             <!-- Pressure: <span id="textFieldCurrentPressure"></span> amu ps⁻²</br> -->
             </p>
             
@@ -230,7 +230,7 @@
                 <div class="dropdown-content">
                     <a href="javascript:void(0)" onclick="choose_line_graph_1_contents(['temperature'])">temperature</a>
                     <a href="javascript:void(0)" onclick="choose_line_graph_1_contents(['numMolecules'])"># molecules</a>
-                    <a href="javascript:void(0)" onclick="choose_line_graph_1_contents(['volume'])">volume</a>
+                    <a href="javascript:void(0)" onclick="choose_line_graph_1_contents(['area'])">area</a>
                     <a href="javascript:void(0)" onclick="choose_line_graph_1_contents(['density'])">density</a>
                     <a href="javascript:void(0)" onclick="choose_line_graph_1_contents(['pressure'])">pressure</a>
                 </div>
@@ -293,6 +293,10 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.1.2/dist/chart.umd.js"></script>
     -->
+    
+    <!-- Load WASM module for various functions. Not currently faster than JS. -->
+    <!-- <script src="lib/distCheck.js"></script> -->
+    <!-- <script src="defineWASM.js"></script> -->
     
     <script src="main.js"></script>
   </body>

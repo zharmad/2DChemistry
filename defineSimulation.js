@@ -33,7 +33,7 @@ class Simulation {
         this.xBounds = new Vector2D(0, 1);
         this.yBounds = new Vector2D(0, 1);
         this.xMaxTarget = undefined;
-        this.xWallVelNominal  = 0.1; //The nominal scalar value of the velocity if the volume needs changing.
+        this.xWallVelNominal  = 0.1; //The nominal scalar value of the wall velocity if the area needs changing.
         this.xWallVel = 0; //The wall velocity seen by molecules when colliding with the shifting boundary.
                 
         //Graphical interface
@@ -97,7 +97,7 @@ class Simulation {
         
     // NB: this one function should never be called while the simulation is running.
     set_target_number_of_molecules( nMol ) { this.nMoleculesTarget = nMol; }
-    set_target_nMols_by_density( dens ) { this.nMoleculesTarget = Math.ceil( dens * this.measure_volume() ); }
+    set_target_nMols_by_density( dens ) { this.nMoleculesTarget = Math.ceil( dens * this.measure_area() ); }
     
     set_world_temperature( T ) { this.temperature = T; }
     get_world_temperature() { return this.temperature; }
@@ -352,17 +352,17 @@ class Simulation {
     constrain_maximum_density() {
         // Inverse density measures the average amount of space available to each molecule.
         const limitRatio = 0.4 ;
-        const volume = this.measure_volume() * 1e-6 ;
-        const targetVolumePerMol = volume / this.nMoleculesTarget;
-        let maxMolVolume = 0.0, molVolume = 0.0;
+        const area = this.measure_area() * 1e-6 ;
+        const targetAreaPerMol = area / this.nMoleculesTarget;
+        let maxMolArea = 0.0, molArea = 0.0;
         for (const name of Object.keys( this.gasComp.data ) ) {
-            molVolume = this.moleculeLibrary.data[name].size**2.0 * Math.PI;
-            maxMolVolume = Math.max( maxMolVolume, molVolume );
+            molArea = this.moleculeLibrary.data[name].size**2.0 * Math.PI;
+            maxMolArea = Math.max( maxMolArea, molArea );
         }
-        maxMolVolume *= 1e-6 ;
-        //console.log( this.nMoleculesTarget, volume, targetVolumePerMol, maxMolVolume );
-        if ( targetVolumePerMol < maxMolVolume / limitRatio ) {
-            const nMoleculesNew = Math.floor( limitRatio * volume / maxMolVolume );
+        maxMolArea *= 1e-6 ;
+        //console.log( this.nMoleculesTarget, area, targetAreaPerMol, maxMolArea );
+        if ( targetAreaPerMol < maxMolArea / limitRatio ) {
+            const nMoleculesNew = Math.floor( limitRatio * area / maxMolArea );
             console.log( `Too dense! Reducing the target number of molecules from ${this.nMoleculesTarget} to ${nMoleculesNew}.` );
             this.nMoleculesTarget = nMoleculesNew;
         }
@@ -483,31 +483,78 @@ class Simulation {
         //arrDel.forEach( m => { this.remove_molecule(m); });
         //arrAdd.forEach( m => { this.add_molecule(m); });
     }
+
+    //Assign positions once and for all to reduce pointer chasing in the pair-computation.
+    set_WASM_memory_block() {        
+        this.memWASM = {};
+        var offset = 0, nMol = this.nMolecules;
+        this.memWASM.xPos = new Float32Array(WASM.mem.buffer, offset, nMol);
+        offset += nMol * Float32Array.BYTES_PER_ELEMENT;
+        this.memWASM.yPos = new Float32Array(WASM.mem.buffer, offset, nMol);
+        offset += nMol * Float32Array.BYTES_PER_ELEMENT;
+        this.memWASM.sizes = new Float32Array(WASM.mem.buffer, offset, nMol);
+        offset += nMol * Float32Array.BYTES_PER_ELEMENT;
+        this.memWASM.nPairs = new Int32Array(WASM.mem.buffer, offset, 1);
+        offset += 1 * Int32Array.BYTES_PER_ELEMENT;
+        this.memWASM.arrPairs = new Int32Array(WASM.mem.buffer, offset, nMol);
+    }
     
-    // This O(n^2) step takes the most time. 32 of 80 seconds on last check for ~2000 molecule system.
-    // TODO: Try emscripten -> Webassembly this piece of code.
-    detect_potential_collisions() {
-        const nMol = this.nMolecules;
-        const xPos = new Float32Array(nMol);
-        const yPos = new Float32Array(nMol);
-        const sizes = new Float32Array(nMol);
-        //Assign positions once and for all to stop pointer chasing.
+    copy_position_info_to_memory( nMol, xPos, yPos, sizes ) {
         for ( let i = 0; i < nMol; i++ ) {
             const p = this.molecules[i].p;
             xPos[i] = p.vec[0];
             yPos[i] = p.vec[1];
             sizes[i] = this.molecules[i].size;
-        }
-        
-        const molPairs = [];
-        for (let i = 0; i < nMol-1; i++) {            
-            for (let j = i + 1; j < nMol; j++ ) {
-                var sepSq = (xPos[j]-xPos[i])*(xPos[j]-xPos[i]) + (yPos[j]-yPos[i])*(yPos[j]-yPos[i]);
-                if ( sepSq < (sizes[j]+sizes[i])*(sizes[j]+sizes[i]) ) {
-                    molPairs.push( [ this.molecules[i], this.molecules[j] ] );
-                }
-            }
         }        
+    }
+    
+    // This O(n^2) step takes the most time. 32 of 80 seconds on last check for ~2000 molecule system.
+    // TODO: Try emscripten -> Webassembly this piece of code.
+    detect_potential_collisions() {
+                
+        const nMol = this.nMolecules;
+        const molPairs = [];
+        
+        // const time1 = Date.now();
+        // if ( WASM.bLoad ) {
+        if ( false ) {
+            //Get arrays and points to WASM memory locations.
+            this.set_WASM_memory_block();            
+
+            this.copy_position_info_to_memory( nMol, this.memWASM.xPos, this.memWASM.yPos, this.memWASM.sizes );
+        
+            // void detect_collisions(int n, float* x, float* y, float* r, int* nPairs, int* pairs) {
+            WASM.instance.exports.detect_collisions(
+                nMol, this.memWASM.xPos.byteOffset, this.memWASM.yPos.byteOffset, this.memWASM.sizes.byteOffset,
+                this.memWASM.nPairs.byteOffset, this.memWASM.arrPairs.byteOffset,
+            );
+            const nPairs   = this.memWASM.nPairs[0];
+            const arrPairs = this.memWASM.arrPairs;
+            if ( nPairs == 0 ) { return molPairs; }
+            for( let i = 0; i < 2 * nPairs; i += 2 ) {
+                molPairs.push( [ this.molecules[ arrPairs[i] ], this.molecules[ arrPairs[i+1] ] ] );
+            }            
+        // const time2 = Date.now();
+        // molPairs.length = 0;
+        // const time3 = Date.now();
+        } else {
+            var xPos = new Float32Array(nMol);
+            var yPos = new Float32Array(nMol);
+            var sizes = new Float32Array(nMol);
+
+            this.copy_position_info_to_memory( nMol, xPos, yPos, sizes );
+            
+            for (let i = 0; i < nMol-1; i++) {            
+                for (let j = i + 1; j < nMol; j++ ) {
+                    var sepSq = (xPos[j]-xPos[i])*(xPos[j]-xPos[i]) + (yPos[j]-yPos[i])*(yPos[j]-yPos[i]);
+                    if ( sepSq < (sizes[j]+sizes[i])*(sizes[j]+sizes[i]) ) {
+                        molPairs.push( [ this.molecules[i], this.molecules[j] ] );
+                    }
+                }
+            }        
+        }
+        // const time4 = Date.now();        
+        // console.log( time2-time1, time4-time3, (time4-time3)/(time2-time1) );
         return molPairs;
     }
         
@@ -709,6 +756,8 @@ class Simulation {
         
         if ( bMovingWall ) { mol.v.x += 2.0 * this.xWallVel } 
 
+        // Open question: Do I account for shear froces as well? 
+        // IF NO:
         if ( bCollideX ) {
             return mol.mass * Math.abs( mol.v.x - vInit.x );
         } else if ( bCollideY ) {
@@ -716,6 +765,8 @@ class Simulation {
         } else {
             return mol.mass * mol.v.dist(vInit);
         }
+        // IF YES:
+        //return mol.mass * mol.v.dist(vInit);
     }
     
     /* Cheapouts when the value has already been done */
@@ -727,25 +778,42 @@ class Simulation {
     }    
     
     /* General analysis functions*/
-    measure_volume() {
+    measure_area() {
         return ( this.xBounds[1] - this.xBounds[0] ) * (this.yBounds[1] - this.yBounds[0] );
     }    
     measure_temperature() {
         // Note: the minus 3 comes from the constraints on setting the center of mass and rotation to zero.
         const totE = this.measure_total_energy();
         return totE / ( 0.5 * (this.nDegrees - 3) * 8.314 * this.timeFactor**2.0 * 1000 ) ;
-    }
-    
+    }    
     measure_perimeter() {
         // In pm
         return 2.0 * ( this.xBounds[1] - this.xBounds[0] + this.yBounds[1] - this.yBounds[0] );
-    }    
-    calculate_instant_pressure( totMomentumTransfer ) {
-        // In amu, pm, fs. Need to convert.
-        // Report as amu, pm, ps.
-        return totMomentumTransfer / this.measure_perimeter() / this.dt / this.timeFactor**2 ;
     }
     
+    calculate_instant_pressure( totalMomentumTransfer ) {
+        // In amu, pm, fs. Need to convert.
+        // Report as amu, pm, ps.
+        return totalMomentumTransfer / this.measure_perimeter() / this.dt / this.timeFactor**2 ;
+    }
+       
+    report_expected_pressure_from_ideal_gas_law() {
+        // Report as amu, pm, ps.
+        // Apply 2/3 factor to Boltzmann's constant here for 2D values.
+        let pExpect  = 0.008314 * this.get_average_stat('temperature') * this.get_average_stat('density') ;
+        let pMeasure = this.get_average_stat('pressure');
+        console.log( "...Based on averages over last 100 steps:\n", 
+            `Expected pressure from PA = nRT is ${pExpect}\n`,
+            `Observed pressure from collisions is ${pMeasure}`,
+        );
+        
+        pExpect  = 0.008314 * this.get_data_frame_stat('temperature') * this.get_data_frame_stat('density') ;
+        pMeasure = this.get_data_frame_stat('pressure');
+        console.log( "...Based on graph data for entire simulation:\n", 
+            `Expected pressure from PA = nRT is ${pExpect}\n`,
+            `Observed pressure from collisions is ${pMeasure}`,
+        );
+    }    
     /* */
     measure_total_energy() {
         let ETot = 0.0; 
@@ -857,9 +925,9 @@ class Simulation {
         delete this.dataFrame;
         this.dataFrame = {};
         this.create_data_frame_entry( 'temperature', 'temperature (K)', 'rgb(0,0,0)' );
-        this.create_data_frame_entry( 'volume', 'volume (nm³)', 'rgb(255,128,0)' );
+        this.create_data_frame_entry( 'area', 'area (nm²)', 'rgb(255,128,0)' );
         this.create_data_frame_entry( 'pressure', 'pressure (amu ps⁻²)', 'rgb(0,255,128)' );
-        this.create_data_frame_entry( 'density', 'density (nm⁻³)', 'rgb(128,0,255)' );
+        this.create_data_frame_entry( 'density', 'density (nm⁻²)', 'rgb(128,0,255)' );
         this.create_data_frame_entry( 'numMolecules', '# of molecules', 'rgb(128,128,128)' );
     }
     
@@ -880,7 +948,7 @@ class Simulation {
         this.stats = {};
         this.stats['timeElapsed'] = [];
         this.stats['numMolecules'] = [];        
-        this.stats['volume'] = [];
+        this.stats['area'] = [];
         this.stats['density'] = [];        
         this.stats['temperature'] = [];
         this.stats['pressure'] = [];
@@ -891,8 +959,8 @@ class Simulation {
         const s = this.stats;
         s.timeElapsed.unshift( this.timeElapsed );
         s.numMolecules.unshift( this.nMolecules );
-        s.volume.unshift( this.measure_volume() * 1e-6 );
-        s.density.unshift( this.nMolecules / s.volume[0] );
+        s.area.unshift( this.measure_area() * 1e-6 );
+        s.density.unshift( this.nMolecules / s.area[0] );
         s.temperature.unshift( this.measure_temperature() );
         //s.pressure.unshift( this.measure_pressure() );
         
@@ -900,7 +968,7 @@ class Simulation {
         if ( this.statsUpdateInterval < s.timeElapsed.length ) {
             s.timeElapsed.pop();
             s.numMolecules.pop();
-            s.volume.pop();
+            s.area.pop();
             s.density.pop();
             s.temperature.pop();
             s.pressure.pop();
@@ -938,6 +1006,16 @@ class Simulation {
         }
         
 
+    }
+
+    get_data_frame_stat( k, tStart, tEnd ) {
+        const arr = this.dataFrame[k].data;
+        if ( undefined === tStart ) { tStart = 0.0; }
+        if ( undefined === tEnd ) { tEnd = Number.MAX_VALUE; }
+        var count = 0, sum = 0.0;
+        for ( const [t,v] of arr ) { if ( t >= tStart && t <= tEnd ) { count++; sum += v }; }
+        if ( 0 == count ) { return undefined; }
+        return sum/count;
     }
         
     /* Analysis functions for graphing in Chart.JS */
@@ -1362,9 +1440,9 @@ class PhotonEmitterModule {
 }
 
 /*
-    Handles some of the additional manipulations and drawing of volume controls.
-    Not all simulation presets need to have its volume adjusted.
+    Handles some of the additional manipulations and drawing of area controls.
+    Not all simulation presets need to have its area adjusted.
 */
-class SimulationVolumeModule {
+class SimulationAreaModule {
     
 }
