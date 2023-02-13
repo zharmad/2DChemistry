@@ -7,7 +7,7 @@ class Simulation {
         this.moletypeNames   = []; // This one is an array to keep track of order.
         this.moletypeCounts  = []; // All are arrays to make it easy to syn up with chart.js
         this.moletypeColours = [];
-        this.nDegrees = 0;
+        this.numDegrees = 0;
         this.nMoleculesTarget = 0;
         this.nTrialsPosition = 10; //Attempt this many trials when placing molecules before resorting to other means.
         
@@ -41,6 +41,7 @@ class Simulation {
         this.refreshAlpha = 0.4 ;
         this.bDrawMolecules = true;        
         this.molDrawStyle = 'molecule';
+        this.molDrawSpeed = 'fast';
         
         // Accounting features. The statistics natively uses a running average to keep track of the last 
         // uses this.statsUpdateInterval as a marker for the length.
@@ -79,7 +80,7 @@ class Simulation {
     reset() {
         this.nMolecules = 0;
         this.molecules = [];
-        this.nDegrees = 0;
+        this.numDegrees = 0;
         this.timestep    = 0;
         this.timeElapsed = 0.0;
         this.bSet = false;
@@ -104,7 +105,10 @@ class Simulation {
     set_bool_heat_exchange( bool ) { this.bHeatExchange = bool; }
     get_bool_heat_exchange() { return this.bHeatExchange; }
 
-    set_world_length_scale( x ) { this.distScale = x ; }
+    set_world_length_scale( x ) {
+        this.distScale = x ;
+        if( this.bSet ) { this.moleculeLibrary.set_current_image( this.molDrawStyle, this.distScale ); }
+    }
     get_world_length_scale() { return this.distScale; }
     set_world_time_factor( x ) { this.timeFactor = x ; }
     get_world_time_factor() { return this.timeFactor; }  
@@ -112,10 +116,13 @@ class Simulation {
     set_refresh_alpha( x ) { this.refreshAlpha = x; }   
 
     set_bool_draw_molecules( bool ) { this.bDrawMolecules = bool; }
-    set_draw_style( type, val ) {
-        //Assume type is molecules for now, can 
+    
+    set_molecule_draw_style( val ) {
         this.molDrawStyle = val;
+        if( this.bSet ) { this.moleculeLibrary.set_current_image( this.molDrawStyle, this.distScale ); }
     }
+    
+    set_molecule_draw_speed( val ) { this.molDrawSpeed = val; }    
     
     // Updating overall simulation speed will also affect some reaction properties.
     set_world_time_delta( x ) {        
@@ -212,14 +219,14 @@ class Simulation {
             this.molecules.push( mol );
             this.nMolecules++; 
         }
-        this.nDegrees += mol.nDegrees * n;
+        this.numDegrees += mol.numDegrees * n;
         this.moletypeCounts[j] += n;
     }
     
     // Add one molecule.
     add_molecule( mol ) {
         this.molecules.push( mol );
-        this.nMolecules++; this.nDegrees += mol.nDegrees;
+        this.nMolecules++; this.numDegrees += mol.numDegrees;
         const j = this.moletypeNames.indexOf( mol.name );
         this.moletypeCounts[j]++;
     }        
@@ -229,7 +236,7 @@ class Simulation {
         delete this.molecules[i];
         this.molecules[i] = this.molecules[this.nMolecules-1];
         this.molecules.pop();        
-        this.nMolecules--; this.nDegrees -= mol.nDegrees;
+        this.nMolecules--; this.numDegrees -= mol.numDegrees;
         const j = this.moletypeNames.indexOf( mol.name );        
         this.moletypeCounts[j]--;
     }
@@ -260,7 +267,7 @@ class Simulation {
         if ( undefined === this.gasComp ) { throw "Simulation instance has no defined composition to sample from!"; }
         this.molecules = [];
         this.moletypeNames = [];
-        this.nMolecules = 0, this.nDegrees = 0;
+        this.nMolecules = 0, this.numDegrees = 0;
                 
         const obj = this.gasComp.get_components();
         this.initialise_moletype_accounting( this.gasComp.get_component_names() );
@@ -318,13 +325,21 @@ class Simulation {
         this.update_values_from_globals();
         //this.initialise_molecules_libraries(args);
         
+        
         // Make sure the gas composition is standardised.
         this.gasComp.normalise();    
         
         this.build_simulation();
 
+
+        // Setup the individual element images
+        //this.moleculeLibrary.tableOfElements.create_all_images( 1.0/this.distScale );        
+        //this.moleculeLibrary.create_all_images();
+        this.moleculeLibrary.set_current_image( this.molDrawStyle, this.distScale );
+
         this.draw_background(1.0);        
-        this.draw_all_new();
+        this.draw_molecules();
+        //this.draw_all_new();
         //this.draw();
         
         this.timestep    = 0;
@@ -356,7 +371,7 @@ class Simulation {
         const targetAreaPerMol = area / this.nMoleculesTarget;
         let maxMolArea = 0.0, molArea = 0.0;
         for (const name of Object.keys( this.gasComp.data ) ) {
-            molArea = this.moleculeLibrary.data[name].size**2.0 * Math.PI;
+            molArea = this.moleculeLibrary.get_molecule_property( name, 'area' );
             maxMolArea = Math.max( maxMolArea, molArea );
         }
         maxMolArea *= 1e-6 ;
@@ -372,36 +387,31 @@ class Simulation {
     draw_background( alpha ) {
         if ( alpha === undefined ) { alpha = this.refreshAlpha; }
         const ctxLoc = this.graphicalContext ;
-        const wWindow = ctxLoc.canvas.width, hWindow = ctxLoc.canvas.height;
+        var wWindow = ctxLoc.canvas.width, hWindow = ctxLoc.canvas.height;
         const wSim = this.xBounds[1] / this.distScale;
-        if ( wSim >= wWindow ) {
-            //Simulation at maximum possible extent.
-            ctxLoc.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctxLoc.fillRect(0, 0, wWindow, hWindow);
-            ctxLoc.lineWidth = 2;
-            ctxLoc.strokeStyle = '#221100';
-            ctxLoc.strokeRect(0, 0, wWindow, hWindow);
-        } else {
-            ctxLoc.fillStyle = `rgb(24,24,24)`;
-            ctxLoc.fillRect(wSim, 0, wWindow, hWindow);            
-            ctxLoc.fillStyle = `rgba(255, 255, 255, ${alpha})`;
-            ctxLoc.fillRect(0, 0, wSim, hWindow);
-            ctxLoc.lineWidth = 2;
-            ctxLoc.strokeStyle = '#221100';
-            ctxLoc.strokeRect(0, 0, wSim, hWindow);            
+        const hSim = this.yBounds[1] / this.distScale;
+        if ( wSim < wWindow ) {
+            ctxLoc.fillStyle = `#494952`;
+            ctxLoc.fillRect(wSim, 0, wWindow, hWindow);
+            wWindow = wSim;
         }
+        if ( hSim < hWindow ) {
+            ctxLoc.fillStyle = `#494952`;
+            ctxLoc.fillRect(0, hSim, wWindow, hWindow);
+            hWindow = hSim;
+        }        
+        ctxLoc.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctxLoc.fillRect(0, 0, wWindow, hWindow);
+        ctxLoc.lineWidth = 2;
+        ctxLoc.strokeStyle = '#221100';
+        ctxLoc.strokeRect(0, 0, wWindow, hWindow);
+
         //Draw on the back of canvas.
         //context.globalCompositeOperation = 'destination-over';
         //Draw on the front again
         //context.globalCompositeOperation = 'source-over';
     }
-    
-    draw() {
-        this.draw_background();
-        for (const mol of this.molecules) {
-            mol.draw( this.graphicalContext, this.molDrawStyle );
-        }
-    }
+
     
     // New strategy is to put all of the circles of the same colour in a single path.
     // This is best done with a molecule colouring scheme.    
@@ -419,23 +429,40 @@ class Simulation {
         }
         
         //Call the relevant function for molecule drawing.
-        this.draw_molecules_all();
+        this.draw_molecules();
     }
     
-    draw_molecules_all() {
-        switch( this.molDrawStyle ) {
-            case "molecule":
-                this.draw_molecules_as_mols();                
-                break;
-            case "atom":
-                this.draw_molecules_as_atoms();                
-                break;
-            default:
-                throw `Invalid molecule drawing setting detected in simulation object! ${this.molDrawStyle}`;                
+    // Draw everything.
+    draw_molecules() {
+        
+        if ( "fast" == this.molDrawSpeed ) {
+            for (const mol of this.molecules) { mol.draw( this.graphicalContext ); }
+        }
+        if ( "slow" == this.molDrawSpeed ) {
+            if ( "molecule" == this.molDrawStyle ) {
+                this.draw_molecules_as_molArcs();
+            } else {
+                for (const mol of this.molecules) { mol.draw_as_atom_circles( this.graphicalContext ); }
+            }
         }
     }
     
-    draw_molecules_as_mols() {
+    // Draw onlt the set of molecules that are given.
+    draw_molecules_array( arr ) {
+        if ( "fast" == this.molDrawSpeed ) {
+            for ( const mol of arr ) { mol.draw( this.graphicalContext ); }
+        }
+        if ( "slow" == this.molDrawSpeed ) {
+            if ( "molecule" == this.molDrawStyle ) {
+                for ( const mol of arr ) { mol.draw_as_one_molecule( this.graphicalContext ); }
+            } else {
+                for ( const mol of arr ) { mol.draw_as_atom_circles( this.graphicalContext ); }
+            }
+        }        
+    }
+    
+    // Uses the canvas fill and stroke mechanism. Slower under current browsers.
+    draw_molecules_as_molArcs() {
    
         const ctxLoc = this.graphicalContext;
         //Collect every atom grouped by molecule colour.
@@ -458,7 +485,7 @@ class Simulation {
             ctxLoc.beginPath();                
             ctxLoc.fillStyle = colours[name];
             ctxLoc.lineWidth = 1;
-            ctxLoc.strokeStyle = '#221100';
+            ctxLoc.strokeStyle = 'black';
             const nCircles = rads[name].length;
             for ( let i = 0; i < nCircles; i++ ) {                
                 ctxLoc.moveTo( xPos[name][i] + rads[name][i], yPos[name][i] );
@@ -467,14 +494,7 @@ class Simulation {
             ctxLoc.stroke();
             ctxLoc.fill();
         }
-    }
-    
-    //TODO convent tp putImageData
-    draw_molecules_as_atoms() {
-        for (const mol of this.molecules) {
-            mol.draw( this.graphicalContext, this.molDrawStyle );
-        }
-    }
+    }    
     
     resolve_molecule_changes( arrAdd, arrDel ) {
         //console.log(`DEBUG at timestep ${this.timestep}: Molecules reacted!`);
@@ -581,7 +601,7 @@ class Simulation {
             this.resolve_molecule_changes( arrAdd, arrDel );            
             // Draw new molecules separately in an asynchronous implementation.
             if ( this.bDrawMolecules ) {
-                for (const mol of arrAdd) { mol.draw( this.graphicalContext, this.molDrawStyle ); }
+                this.draw_molecules_array( arrAdd );
             }
             //stop_simulation();
         }
@@ -784,7 +804,7 @@ class Simulation {
     measure_temperature() {
         // Note: the minus 3 comes from the constraints on setting the center of mass and rotation to zero.
         const totE = this.measure_total_energy();
-        return totE / ( 0.5 * (this.nDegrees - 3) * 8.314 * this.timeFactor**2.0 * 1000 ) ;
+        return totE / ( 0.5 * (this.numDegrees - 3) * 8.314 * this.timeFactor**2.0 * 1000 ) ;
     }    
     measure_perimeter() {
         // In pm
@@ -929,6 +949,7 @@ class Simulation {
         this.create_data_frame_entry( 'pressure', 'pressure (amu ps⁻²)', 'rgb(0,255,128)' );
         this.create_data_frame_entry( 'density', 'density (nm⁻²)', 'rgb(128,0,255)' );
         this.create_data_frame_entry( 'numMolecules', '# of molecules', 'rgb(128,128,128)' );
+        this.create_data_frame_entry( 'performance', 'simulated-ps per RL-min', 'rgb(128,192,64)' );
     }
     
     create_data_frame_entry( key, label, BGColour ) {
@@ -995,6 +1016,7 @@ class Simulation {
             }
         }
         //this.dataFrame['temperature'].data.push( [ t, this.get_average_() ] );
+        this.dataFrame['performance'].data.push( [ t, this.check_lap_timer() ] );
         
         // Molecule inventory
         const n = this.moletypeNames.length;       
@@ -1132,6 +1154,23 @@ class Simulation {
         This section is for functionalities that are required only for specific setups.
         Example is the UV emitter module for ozone layer models.
     */
+
+    //Report as ns per minute in RL.    
+    check_lap_timer() {
+        const nowRL  = Date.now();
+        const nowSim = this.timeElapsed;
+        const dtRL  = nowRL  - this.timeRealLife;
+        const dtSim = nowSim - this.timeSimulation;
+        this.timeRealLife = nowRL;
+        this.timeSimulation = nowSim;
+        return dtSim / dtRL * 6e4 ;
+    }
+    
+    reset_lap_timer() {
+        this.timeRealLife   = Date.now();
+        this.timeSimulation = this.timeElapsed;
+    }
+    
     reset_plugin_modules() {
         for ( let i = 0; i < this.nModules; i++ ) {
             delete this.modules[i];
