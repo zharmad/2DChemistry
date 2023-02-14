@@ -2,6 +2,8 @@
 
 An atom-based simulation engine; designed to help secondary to early-tertiary students understand core chemistry concepts and visualise common gas-phase natural phenomena & industrial applications. A web demo is available at my GitHub Page: https://zharmad.github.io/2DChemistry/
 
+Based on my preliminary testing (Feb 2023), the performance on Firefox is generally better than Chrome.
+
 ## What this is for
 
 This toy-model is meant to accomplish the following design goals:
@@ -48,7 +50,7 @@ The units of measurements in this toy model include Kelvins (K), nano/picometers
     - starting areas and temperatures.
 - Dynamic adjustments of overall conditions:
     - Temperature for now. Area is WIP, adding and removing species will be next.
-- Acceptable performance up to thousands of atoms on PC, and hundreds of atoms on mobile. (Would like another order of magnitude.)
+- Acceptable performance up to ~10,000 atoms on PC and on mobile.
 - Basic analysis pipeline, with graphs that can be directly exported via the HTML5 Canvas interface.
     - Aggregate measures: temperature, pressure, area, density, etc.
     - species count.
@@ -59,7 +61,7 @@ The units of measurements in this toy model include Kelvins (K), nano/picometers
 - (Wishlist) Modify the reaction energies and watch responses. This will probably need a graph theory behind the scenes to ensure consistent energies.
 - (Wishlist) Control of simulation box area to model area effects. (Currently on μVT and μVE conditions).
 - (Wishlist) Control: User interface to add and remove molecules so as to simulate industrial steps, e.g. during the conversion of sulfur dioxide pollutant into useful sulfuric acid.
-- (Wishlist) Moddability: User interface to create molecuels and reactions of their own.
+- (Wishlist) Moddability: User interface to create molecules and reactions of their own.
 - (Wishlist) Feature: Dedicate one wall for a surface catalyst. This enables Haber process catalysis and many others used in industry.
 
 ## How does the simulation work?
