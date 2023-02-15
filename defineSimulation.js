@@ -296,13 +296,6 @@ class Simulation {
             }
             this.create_data_frame_entry( name, name, colour );
         });        
-
-        // Create graphical icons for atoms for use in putImageData.
-
-        //Initial setup of statistical data.
-        this.update_statistics();
-        this.push_current_stats();        
-        this.push_data_frame_composition();
         
         //Synchronise and set up graph data.
         this.bSet = true;
@@ -313,9 +306,11 @@ class Simulation {
     async regenerate_simulation(args) {
         
         this.bSet = false;
-        this.update_values_from_globals();
-        //this.initialise_molecules_libraries(args);
+        this.timestep    = 0;
+        this.timeElapsed = 0.0;
         
+        this.update_values_from_globals();
+        //this.initialise_molecules_libraries(args);        
         
         // Make sure the gas composition is standardised.
         this.gasComp.normalise();    
@@ -342,9 +337,12 @@ class Simulation {
             this.collisionDetectMethod = "standard";
         }        
         
-        this.timestep    = 0;
-        this.timeElapsed = 0.0;
         //this.reset_line_graph();
+        
+        //Initial setup of statistical data.
+        this.update_statistics();
+        this.push_current_stats();        
+        this.push_data_frame_composition();
         
         //Graph inital velocities.
         this.sync_all_graphs();
