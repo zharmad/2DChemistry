@@ -1042,7 +1042,7 @@ class Simulation {
         this.dataFrame = {};
         this.create_data_frame_entry( 'temperature', 'temperature (K)', 'rgb(0,0,0)' );
         this.create_data_frame_entry( 'area', 'area (nm²)', 'rgb(255,128,0)' );
-        this.create_data_frame_entry( 'pressure', 'pressure (amu ps⁻²)', 'rgb(0,255,128)' );
+        this.create_data_frame_entry( 'pressure', 'pressure (amu pm ps⁻² pm⁻¹)', 'rgb(0,255,128)' );
         this.create_data_frame_entry( 'density', 'density (nm⁻²)', 'rgb(128,0,255)' );
         this.create_data_frame_entry( 'numMolecules', '# of molecules', 'rgb(128,128,128)' );
         this.create_data_frame_entry( 'performance', 'simulated-ps per RL-min', 'rgb(128,192,64)' );

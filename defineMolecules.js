@@ -361,8 +361,7 @@ class MoleculeType {
     }
 
     // Use HTML Canvas notation. Return only width/height
-    calculate_draw_dimensions( scale ) {
-        if ( undefined === scale ) { scale = 1.0; }
+    calculate_draw_dimensions() {
         const n = this.numAtoms;
         var xmin = 0.0, xmax = 0.0, ymin = 0.0, ymax = 0.0;
         for ( let i = 0; i < n; i++ ) {
@@ -373,8 +372,8 @@ class MoleculeType {
             xmax = ( xmax < x + r ) ? x + r : xmax;
             ymin = ( ymin > y - r ) ? y - r : ymin;
             ymax = ( ymax < y + r ) ? y + r : ymax;
-        }
-        return [ scale * ( xmax - xmin ), scale * ( ymax - ymin ) ];
+        }        
+        return [ 2 * Math.max( xmax, -xmin), 2 * Math.max( ymax, -ymin) ];
     }
     
     /*
@@ -392,8 +391,8 @@ class MoleculeType {
         var colourExterior = RGBops.compose_array( RGBops.combine( rgbInt, [0,0,0], 0.5 ) );
 
         
-        canvas.width  = dim[0] = Math.ceil( 2.0 * ( dim[0] + lineWidth) );
-        canvas.height = dim[1] = Math.ceil( 2.0 * ( dim[1] + lineWidth) );
+        canvas.width  = dim[0] = Math.ceil( scale * dim[0] + lineWidth);
+        canvas.height = dim[1] = Math.ceil( scale * dim[1] + lineWidth);
         
         // Create gradient
         const n = this.numAtoms;        

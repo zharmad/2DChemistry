@@ -129,6 +129,13 @@ toggleUpdateSimWindow.checked = true;
 toggleUpdateSimWindow.oninput = function () {
    //globalVars.bHeatExchange = toggleDoHeatExchange.checked;
     sim.set_bool_draw_molecules( toggleUpdateSimWindow.checked );
+    if ( toggleUpdateSimWindow.checked ) {
+        if ( !bRun ) {
+            sim.draw_molecules();
+        }
+    } else {
+        sim.draw_background(1.0);
+    }
 }
 
 const buttonMoleculeDrawStyle = document.getElementById("buttonMoleculeDrawStyle");
@@ -156,6 +163,7 @@ function update_molecule_draw_style( style ) {
             break;
     }
     buttonMoleculeDrawStyle.innerHTML = style;
+    if ( ! bRun ) { sim.draw_molecules(); }
 }
 /*
     Module dependent items.
@@ -197,7 +205,7 @@ for ( let i = 0; i < 6; i++ ) {
     
     // GUI changes in the analysis tab for dynamically showing components that can be plotted.
     /*
-    o.spanPlot   = document.getElementById(`spanPlotComponent${i}`);
+    o.imagePlot   = document.getElementById(`imagePlotComponent${i}`);
     o.textFieldPlot = document.getElementById(`textFieldPlotComponent${i}`);    
     o.toggle     = document.getElementById(`togglePlotComponent${i}`);
     o.toggle.oninput = function () {}
@@ -717,7 +725,7 @@ function generate_preset_simulation( strType ) {
 function sync_composition_gui( obj ) {
     /*
     <div id="divInputComponent1" class="divDynamicBox">
-        <p><span id="textFieldComponent1"></span>: <span id="textPercentageComponent1"></span>%</p>
+        <p><image id="textFieldComponent1"></image>: <image id="textPercentageComponent1"></image>%</p>
         <input type="range" min="0" max="100" value="50" class="slider" id="sliderPercentageComponent1">
     </div>    
     */
@@ -742,14 +750,14 @@ function sync_composition_gui( obj ) {
             //o.slider.oninput = function () { this.ratioField.innerHTML = this.value; }
             
             /*
-                o.spanPlot.style.display = "inline";
+                o.imagePlot.style.display = "inline";
                 o.textFieldPlot.innerHTML = name;
                 o.toggle.name = name;
             */
 
         } else {
             o.div.style.display = "none";
-            //o.spanPlot.style.display = "none";
+            //o.imagePlot.style.display = "none";
         }
     }    
 }
@@ -878,3 +886,13 @@ if ( controlsSidebar.widthOpen > 10 ) {
     // .then( instance => {
         // collision_check_wasm = instance.exports.check_collision;
     // });
+
+// = = = Decorations Section = =
+//Show two random molecules from the initial preset library.
+const imageInfoTitlePrefix = document.getElementById("imageInfoTitlePrefix");
+const imageInfoTitleSuffix = document.getElementById("imageInfoTitleSuffix");
+var temp = globalVars.presets[ globalVars.initialPreset ].componentIDs;
+var i = randomInt( 0 , temp.length - 1);
+imageInfoTitlePrefix.src = molLib.get_entry( temp[i] ).imageSet['atom']['10'].image.src;
+var i = randomInt( 0 , temp.length - 1);
+imageInfoTitleSuffix.src = molLib.get_entry( temp[i] ).imageSet['atom']['10'].image.src;
