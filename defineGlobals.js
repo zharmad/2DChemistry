@@ -50,6 +50,9 @@ globalVars.statisticsUpdateInterval = 100;
 globalVars.worldWidth = undefined; 
 globalVars.worldHeight = undefined;
 
+globalVars.worldAreaPercentage = 100;
+globalVars.worldAreaPercentageParams = { min: 20, max: 100, step: 1 }
+
 globalVars.initialPreset = "nitrogen dioxide";
 globalVars.bPresetsOverwriteParams = true; //Prevent the initial loading from overwriting HTML overrides.
 

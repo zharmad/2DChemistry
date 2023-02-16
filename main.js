@@ -82,7 +82,17 @@ sliderWorldTemperature.oninput = function() {
     textFieldWorldTemperature.innerHTML = this.value;
     globalVars.temperature = this.value;
     sim.set_world_temperature( this.value );
-} 
+}
+
+const sliderWorldAreaPercentage = document.getElementById("sliderWorldAreaPercentage");
+const textFieldWorldAreaPercentage = document.getElementById("textFieldWorldAreaPercentage");
+update_slider_values( sliderWorldAreaPercentage, { value: globalVars.worldAreaPercentage, params: globalVars.worldAreaPercentageParams });
+textFieldWorldAreaPercentage.innerHTML = sliderWorldAreaPercentage.value;
+sliderWorldAreaPercentage.oninput = function() {
+    textFieldWorldAreaPercentage.innerHTML = this.value;
+    globalVars.worldAreaPercentage = this.value;
+    sim.set_world_area_percentage( this.value );
+}
 
 const toggleDoHeatExchange = document.getElementById("toggleDoHeatExchange");
 toggleDoHeatExchange.checked = globalVars.bHeatExchange;
@@ -352,6 +362,7 @@ sim.chartBarGr = chartBarGr;
 
 //Link up live-updating text fields
 sim.link_current_stats_text_fields({
+    timeElapsed: document.getElementById("textFieldCurrentTimeElapsed"),
     numMolecules: document.getElementById("textFieldCurrentNumMolecules"),
     temperature: document.getElementById("textFieldCurrentTemperature"),
     area: document.getElementById("textFieldCurrentArea"),
@@ -425,6 +436,11 @@ function stop_simulation(){
 
 function restart_simulation() {
     bRun = false;
+    
+    //Hack to restore initial.
+    sliderWorldAreaPercentage.value = 100;
+    sliderWorldAreaPercentage.oninput();
+    
     //Store and retrive the current toggled state of the plot.
     const arrHidden = {};
     chartLineGr2.data.datasets.forEach((dataSet, i) => {
@@ -661,6 +677,7 @@ function generate_preset_simulation( strType ) {
     if( globalVars.bPresetsOverwriteParams ) {
         overwrite_global_values( strType );
     }
+
     
     // Create the gas composition here.
     const gc = new GasComposition('ratio');
@@ -719,6 +736,10 @@ function generate_preset_simulation( strType ) {
         default:   
             divPhotonEmitterIntensity.style.display = "none";
     }
+    
+    //Hack to restore initial setting.
+    sliderWorldAreaPercentage.value = 100;
+    sliderWorldAreaPercentage.oninput();    
 }
 
 //Synchronise the composition GUI for future user modification. Hook up the variable elements directly to the gas composition object.
