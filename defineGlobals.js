@@ -304,14 +304,17 @@ globalVars.presetReactions[ "ClNO equilibrium (aqua regia)" ] = [
 globalVars.presetReactions[ "hydrogen iodide equilibrium" ] = [
     {
         reactantNames: [ "H•", "H•" ], productNames: [ "H₂" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],        
         EActivation: 0.0, DeltaH: -43.6, lifetimeActivated: 1000,
     },
     {
         reactantNames: [ "I•", "I•" ], productNames: [ "I₂" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
         EActivation: 0.0, DeltaH: -15.2, lifetimeActivated: 1000,
     },
     {
         reactantNames: [ "I•", "H•" ], productNames: [ "HI" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
         EActivation: 0.0, DeltaH: -29.9, lifetimeActivated: 1000,
     },    
     {
@@ -410,10 +413,12 @@ globalVars.presetReactions[ "hydrogen iodide equilibrium" ] = [
 globalVars.presetReactions[ "ozone equilibrium core" ] = [
     {
         reactantNames: [ "O•", "O•" ], productNames: [ "O₂" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
         EActivation:   0, lifetimeActivated: 1000,
     }, // UV-triggered decomposition.
     {
         reactantNames: [ "O₂", "O•" ], productNames: [ "O₃" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
         EActivation: 0, lifetimeActivated: 1000,
     },
     {
@@ -440,6 +445,7 @@ globalVars.presetReactions[ "ozone equilibrium core" ] = [
 globalVars.presetReactions[ "ozone layer with Chlorine" ] = [
     {
         reactantNames: [ "O•", "Cl•" ], productNames: [ "ClO•" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
         EActivation:   0, lifetimeActivated: 1000,
     },  // DeltaH = -268 kJ/mol. Relatively safe to ignore.    
     {
@@ -452,6 +458,7 @@ globalVars.presetReactions[ "ozone layer with Chlorine" ] = [
     },  // DeltaH = -253 kJ/mol. Relatively safe to ignore.    
     {
         reactantNames: [ "O₂", "Cl•" ], productNames: [ "ClOO•" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
         EActivation: 0.5, lifetimeActivated: 1000,
     }, // DeltaH = -23 kJ/mol
     {
@@ -468,6 +475,7 @@ globalVars.presetReactions[ "ozone layer with Chlorine" ] = [
     }, // DeltaH = -76 kJ/mol
     {
         reactantNames: [ "Cl•", "Cl•" ], productNames: [ "Cl₂" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
         EActivation:   0, lifetimeActivated: 1000,
     }, // DeltaH = -242 kJ/mol. Side product.
     {
@@ -665,10 +673,12 @@ globalVars.presetReactions[ "ozone layer with NOX" ] = [
     // Part A: Combination reactions. Most of these are UV-catalysed to decompose as well.
     { 
         reactantNames: [ "N•", "N•" ], productNames: [ "N₂" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
         EActivation: 0.5, lifetimeActivated: 1000, bDoReverse: false,
     }, // DeltaH: -944 kJ/mol. Guessed EA. Ignore decomposition pathway. 
     // {
         // reactantNames: [ "N₂", "O•" ], productNames: [ "N₂O" ],
+        // reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],        
         // EActivation: 9.6, lifetimeActivated: 1000,
     // }, // DeltaH: -166 kJ/mol. SDMech data computed.
     // {
@@ -679,6 +689,7 @@ globalVars.presetReactions[ "ozone layer with NOX" ] = [
     // }, // DeltaH: -480 kJ/mol. Guessed EA
     { 
         reactantNames: [ "N•", "O•" ], productNames: [ "NO•" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],        
         EActivation: 0.5, lifetimeActivated: 1000,
     }, //DeltaH: -630 kJ/mol. Guessed EA
     {
@@ -872,11 +883,13 @@ globalVars.presetReactions[ "combustion - H2 and O2 basic" ] = [
     // Hydrogen direct decomposition and recombination.
     {
         reactantNames: ["H•", "H•"], productNames: ["H₂"],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],        
         EActivation: 0.0, lifetimeActivated: 1000,
     }, // DeltaH: -436  kJ/mol
     // Oxygen direct decomposition and recombination.
     {
         reactantNames: ["O•", "O•"], productNames: ["O₂"],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],        
         EActivation: 0.0, lifetimeActivated: 1000,
     }, // DeltaH: -498  kJ/mol
     // Water direct decomposition and recombination.
@@ -889,6 +902,7 @@ globalVars.presetReactions[ "combustion - H2 and O2 basic" ] = [
     // OH radical direct decomposition and recombination.
     {
         reactantNames: ["O•", "H•"], productNames: ["HO•"],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
         EActivation: 0.0, DeltaH: -43.0, lifetimeActivated: 1000,
     }, // DeltaH: -430 kJ/mol
     {
@@ -900,9 +914,9 @@ globalVars.presetReactions[ "combustion - H2 and O2 basic" ] = [
     // Radical propagation 2: oxygen and hydrogen molecule
     {
         reactantNames: [ "HO•", "H•" ], productNames: [  "O•", "H₂" ],
-        EActivation: 2.0,
         reactantAngles:      [ 180,   0 ], 
         reactantAngleRanges: [ 180, 360 ],
+        EActivation: 2.0,
     }, //  DeltaH: -6 kJ/mol
     //  Collision-based water formation 1. 
     {
@@ -1005,24 +1019,24 @@ globalVars.presetReactions[ "combustion - H2 and O2 advanced" ] = [
     }, // DeltaH: -291 kJ/mol 
     { 
         reactantNames: [ "HO₂•", "HO₂•" ], productNames: [ "O₂", "H₂O₂" ],
-        reactantAngles:      [ 240,   0 ],
-        reactantAngleRanges: [ 120, 120 ],
+        reactantAngles:      [ 180,   0 ],
+        reactantAngleRanges: [ 180, 180 ],
         productAngles:       [   0,  45 ],
         productAngleRanges:  [ 360,  90 ],
         EActivation: 4.6, bDoReverse: false,
     }, // DeltaH: -159 kJ/mol. Symmetry 1-1
     { 
         reactantNames: [ "HO₂•", "HO₂•" ], productNames: [ "H₂O₂", "O₂" ],
-        reactantAngles:      [   0, 240 ],
-        reactantAngleRanges: [ 120, 120 ],
+        reactantAngles:      [   0, 180 ],
+        reactantAngleRanges: [ 180, 180 ],
         productAngles:       [  45,   0 ],
         productAngleRanges:  [  90, 360 ],
         EActivation: 4.6,
     },  // DeltaH: -159 kJ/mol. Symmetry 2-1
     { 
         reactantNames: [ "HO₂•", "HO₂•" ], productNames: [ "H₂O₂", "O₂" ],
-        reactantAngles:      [   0, 240 ],
-        reactantAngleRanges: [ 120, 120 ],
+        reactantAngles:      [   0, 180 ],
+        reactantAngleRanges: [ 180, 180 ],
         productAngles:       [ 225,   0 ],
         productAngleRanges:  [  90, 360 ],
         EActivation: 4.6, bDoForward: false,
@@ -1098,160 +1112,749 @@ globalVars.presetReactions[ "combustion - H2 and O2 advanced" ] = [
     The methane combustion pathway involves many species and hundreds of individual reactions. For a nice review on how complex fluid dynamics are used to model combustion, see Zettervall et al. (2021), DOI: 10.3390/fuels2020013 
     
     The reaction equations will use the DRM22 model as the basis, see: http://combustion.berkeley.edu/drm/ . The singlet/triple state of CH2 is further reduced to just the triplet state. This is composed of the following species:
-    H2, H, O, O2, OH, H2O, HO2, H2O2,
-    CH2(T)/CH2(S), CH3, CH4, CO, CO2, HCO, CH2O, CH3O, C2H2, C2H3, C2H4, C2H5, C2H6.
-        
+    H2, H, O, O2, OH, H2O, HO2, H2O2, CH2(T)/CH2(S), CH3, CH4, CO, CO2, HCO, CH2O, CH3O, C2H2, C2H3, C2H4, C2H5, C2H6.
+
+    NB: Reference units of Ea is in cal/mol.
     NB: Effects of adding ozone can be incorporated by considering Sun et al. (2019), DOI: 10.1016/j.pecs.2019.02.002
     NB: Effects of adding in ammonia can be incoporated by considering Wang et al. (2023), 10.1016/j.fuel.2022.125806    
 */
 
-globalVars.presetReactions[ "combustion - hydrocarbon (DRM22)" ] = [
-    // O+H+M<=>OH+M                             5.000E+17   -1.000      0.00           
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // O+H2<=>H+OH                              5.000E+04    2.670   6290.00           
-    // O+HO2<=>OH+O2                            2.000E+13    0.000      0.00           
-    // O+CH2<=>H+HCO                            8.000E+13    0.000      0.00           
-    // O+CH2(S)<=>H+HCO                         1.500E+13    0.000      0.00           
-    // O+CH3<=>H+CH2O                           8.430E+13    0.000      0.00           
-    // O+CH4<=>OH+CH3                           1.020E+09    1.500   8600.00           
-    // O+CO+M<=>CO2+M                           6.020E+14    0.000   3000.00           
-    // H2/2.00/ O2/6.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/3.50/ C2H6/3.00/ AR/0.50/    
-    // O+HCO<=>OH+CO                            3.000E+13    0.000      0.00           
-    // O+HCO<=>H+CO2                            3.000E+13    0.000      0.00           
-    // O+CH2O<=>OH+HCO                          3.900E+13    0.000   3540.00           
-    // O+C2H2<=>CH2(S)+CO                       1.020E+07    2.000   1900.00           
-    // O+C2H2<=>CO+CH2                          1.020E+07    2.000   1900.00           
-    // O+C2H4<=>CH3+HCO                         1.920E+07    1.830    220.00           
-    // O+C2H5<=>CH3+CH2O                        1.320E+14    0.000      0.00           
-    // O+C2H6<=>OH+C2H5                         8.980E+07    1.920   5690.00           
-    // O2+CO<=>O+CO2                            2.500E+12    0.000  47800.00           
-    // O2+CH2O<=>HO2+HCO                        1.000E+14    0.000  40000.00           
-    // H+O2+M<=>HO2+M                           2.800E+18   -0.860      0.00           
-    // O2/0.00/ H2O/0.00/ CO/0.75/ CO2/1.50/ C2H6/1.50/ N2/0.00/ AR/0.00/              
-    // H+2O2<=>HO2+O2                           3.000E+20   -1.720      0.00           
+globalVars.presetReactions[ "combustion - hydrocarbon (DRM22)" ] = [    
+    // O+H+M<=>OH+M                             5.000E+17   -1.000      0.00
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "O•", "H•" ], productNames: [ "HO•" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],        
+        EActivation:  0.0, lifetimeActivated: 1000
+    },
+    // O+H2<=>H+OH                              5.000E+04    2.670   6290.00
+    {
+        reactantNames:  [ "HO•", "H•" ], productNames: [  "O•", "H₂" ],
+        reactantAngles: [ 180, 0 ], reactantAngleRanges: [ 180, 360 ],
+        EActivation: 2.63,
+    },
+    // O+HO2<=>OH+O2                            2.000E+13    0.000      0.00               
+    {
+        reactantNames:  [ "HO₂•", "O•" ], productNames: [  "HO•", "O₂" ],
+        reactantAngles: [ 0, 0 ], reactantAngleRanges: [ 180, 360 ],
+        EActivation: 0.0,
+    },
+    // O+CH2<=>H+HCO                            8.000E+13    0.000      0.00
+    // O+CH2(S)<=>H+HCO                         1.500E+13    0.000      0.00
+    {
+        reactantNames:  [ "CH₂•", "O•" ], productNames: [  "H•", "HCO•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 180 ],
+        EActivation: 0.0,
+    },
+    // O+CH3<=>H+CH2O                           8.430E+13    0.000      0.00
+    {
+        reactantNames:  [ "CH₃•", "O•" ], productNames: [  "H•", "CH₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 240 ],
+        EActivation: 0.0,
+    },
+    // O+CH4<=>OH+CH3                           1.020E+09    1.500   8600.00
+    {
+        reactantNames:  [ "CH₄", "O•" ], productNames: [  "HO•", "CH₃•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation: 3.60, // DeltaH: +9 kJ/mol
+    },    
+    // O+CO+M<=>CO2+M                           6.020E+14    0.000   3000.00    
+    // H2/2.00/ O2/6.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/3.50/ C2H6/3.00/ AR/0.50/       
+    {
+        reactantNames:  [ "CO", "O•" ], productNames: [ "CO₂" ],
+        reactantAngles: [ 0, 0 ], reactantAngleRanges: [ 180, 360 ],
+        EActivation:  1.26, lifetimeActivated: 1000
+    },
+    // O+HCO<=>OH+CO                            3.000E+13    0.000      0.00
+    {
+        reactantNames:  [ "HCO•", "O•" ], productNames: [ "CO", "HO•" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [ 180, 180 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 0.0,
+    },
+    // O+HCO<=>H+CO2                            3.000E+13    0.000      0.00
+    {
+        reactantNames:  [ "HCO•", "O•" ], productNames: [ "H•", "CO₂"  ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 360 ],
+        EActivation: 0.0,
+    },
+    // O+CH2O<=>OH+HCO                          3.900E+13    0.000   3540.00
+    {
+        reactantNames:  [ "CH₂O", "O•" ], productNames: [ "HCO•", "HO•" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 240, 360 ],
+        productAngles:  [ 180, 180 ], productAngleRanges:  [ 240, 180 ],
+        EActivation: 1.48,
+    },
+    // O+C2H2<=>CH2(S)+CO                       1.020E+07    2.000   1900.00
+    // O+C2H2<=>CO+CH2                          1.020E+07    2.000   1900.00
+    {
+        reactantNames:  [ "C₂H₂", "O•" ], productNames: [ "CH₂•", "CO" ],
+        reactantAngles: [  90,   0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 0.79,
+    },
+    {
+        reactantNames:  [ "C₂H₂", "O•" ], productNames: [ "CH₂•", "CO" ],
+        reactantAngles: [ 270,   0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 0.79, bDoReverse: false,
+    },
+    // O+C2H4<=>CH3+HCO                         1.920E+07    1.830    220.00
+    {
+        reactantNames:  [ "C₂H₄", "O•" ], productNames: [ "CH₃•", "HCO•" ],
+        reactantAngles: [  90,   0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 180 ],
+        EActivation: 0.09,
+    },
+    {
+        reactantNames:  [ "C₂H₄", "O•" ], productNames: [ "CH₃•", "HCO•" ],
+        reactantAngles: [  270,  0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 180 ],
+        EActivation: 0.09, bDoReverse: false,
+    },
+    // O+C2H5<=>CH3+CH2O                        1.320E+14    0.000      0.00
+    {
+        reactantNames:  [ "C₂H₅•", "O•" ], productNames: [ "CH₃•", "CH₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 240 ],
+        EActivation: 0.0,
+    },
+    // O+C2H6<=>OH+C2H5                         8.980E+07    1.920   5690.00
+    {
+        reactantNames:  [ "C₂H₆", "O•" ], productNames: [ "C₂H₅•", "HO•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 2.38,
+    },
+    // O2+CO<=>O+CO2                            2.500E+12    0.000  47800.00
+    {
+        reactantNames:  [ "O₂", "CO" ], productNames: [ "O•", "CO₂" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 360, 180 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 360 ],
+        EActivation: 20.00,
+    },
+    // O2+CH2O<=>HO2+HCO                        1.000E+14    0.000  40000.00               
+    {
+        reactantNames:  [ "CH₂O", "O₂" ], productNames: [ "HCO•", "HO₂•" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 240, 360 ],
+        productAngles:  [ 180, 180 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 16.74, // DeltaH: +163 kJ/mol
+    },
+    // H+O2+M<=>HO2+M                           2.800E+18   -0.860      0.00
+    // O2/0.00/ H2O/0.00/ CO/0.75/ CO2/1.50/ C2H6/1.50/ N2/0.00/ AR/0.00/
+    // H+2O2<=>HO2+O2                           3.000E+20   -1.720      0.00
     // H+O2+H2O<=>HO2+H2O                       9.380E+18   -0.760      0.00           
     // H+O2+N2<=>HO2+N2                         3.750E+20   -1.720      0.00           
-    // H+O2+AR<=>HO2+AR                         7.000E+17   -0.800      0.00           
+    // H+O2+AR<=>HO2+AR                         7.000E+17   -0.800      0.00               
+    {
+        reactantNames:  [ "O₂", "H•" ], productNames: [ "HO₂•" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],        
+        EActivation: 0.0, lifetimeActivated: 1000
+    },
     // H+O2<=>O+OH                              8.300E+13    0.000  14413.00           
-    // 2H+M<=>H2+M                              1.000E+18   -1.000      0.00           
+    {
+        reactantNames:  [ "O₂", "H•" ], productNames: [ "O•", "HO•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 180 ],
+        EActivation: 6.80, bDoForward: false, // Skip the forward reaction.
+    },
+    // 2H+M<=>H2+M                              1.000E+18   -1.000      0.00 
     // H2/0.00/ H2O/0.00/ CH4/2.00/ CO2/0.00/ C2H6/3.00/ AR/0.63/                      
     // 2H+H2<=>2H2                              9.000E+16   -0.600      0.00           
     // 2H+H2O<=>H2+H2O                          6.000E+19   -1.250      0.00           
-    // 2H+CO2<=>H2+CO2                          5.500E+20   -2.000      0.00           
-    // H+OH+M<=>H2O+M                           2.200E+22   -2.000      0.00           
-    // H2/0.73/ H2O/3.65/ CH4/2.00/ C2H6/3.00/ AR/0.38/                                
-    // H+HO2<=>O2+H2                            2.800E+13    0.000   1068.00           
-    // H+HO2<=>2OH                              1.340E+14    0.000    635.00           
-    // H+H2O2<=>HO2+H2                          1.210E+07    2.000   5200.00           
-    // H+CH2(+M)<=>CH3(+M)                      2.500E+16   -0.800      0.00           
+    // 2H+CO2<=>H2+CO2                          5.500E+20   -2.000      0.00               
+    {
+        reactantNames: [ "H•", "H•" ], productNames: [ "H₂" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
+        EActivation:  0.0, lifetimeActivated: 1000
+    },
+    // H+OH+M<=>H2O+M                           2.200E+22   -2.000      0.00
+    // H2/0.73/ H2O/3.65/ CH4/2.00/ C2H6/3.00/ AR/0.38/
+    {
+        reactantNames: [ "HO•", "H•" ], productNames: [ "H₂O" ],
+        reactantAngles: [ 0, 0 ], reactantAngleRanges: [ 180, 360 ],
+        EActivation:  0.0, lifetimeActivated: 1000
+    },
+    // H+HO2<=>O2+H2                            2.800E+13    0.000   1068.00
+    {
+        reactantNames: [ "HO₂•", "H•" ], productNames: [ "O₂", "H₂" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 360 ],
+        EActivation:  0.45,
+    },
+    // H+HO2<=>2OH                              1.340E+14    0.000    635.00
+    {
+        reactantNames: [ "HO₂•", "H•" ], productNames: [ "HO•", "HO•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 180 ],
+        EActivation:  0.27,
+    },
+    // H+H2O2<=>HO2+H2                          1.210E+07    2.000   5200.00
+    {
+        reactantNames: [ "H₂O₂", "H•" ], productNames: [ "HO₂•", "H₂" ],
+        reactantAngles: [  45,   0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  2.17,
+    },
+    {
+        reactantNames: [ "H₂O₂", "H•" ], productNames: [ "HO₂•", "H₂" ],
+        reactantAngles: [ 225,   0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  2.17, bDoReverse: false
+    },
+    // H+CH2(+M)<=>CH3(+M)                      2.500E+16   -0.800      0.00
          // LOW  /  3.200E+27   -3.140   1230.00/                                      
          // TROE/  0.6800   78.00  1995.00  5590.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "CH₂•", "H•" ], productNames: [ "CH₃•" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
+        EActivation:  0.0, lifetimeActivated: 1000
+    },
     // H+CH3(+M)<=>CH4(+M)                      1.270E+16   -0.630    383.00           
          // LOW  /  2.477E+33   -4.760   2440.00/                                      
          // TROE/  0.7830   74.00  2941.00  6964.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // H+CH4<=>CH3+H2                           6.600E+08    1.620  10840.00           
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "CH₃•", "H•" ], productNames: [ "CH₄" ],
+        reactantAngles: [   0,    0 ], reactantAngleRanges: [ 360,  360 ],
+        EActivation:  0.16, lifetimeActivated: 1000
+    },
+    // H+CH4<=>CH3+H2                           6.600E+08    1.620  10840.00
+    {
+        reactantNames: [ "CH₄", "H•" ], productNames: [ "CH₃•", "H₂" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 360 ],
+        EActivation:  4.54,
+    },
     // H+HCO(+M)<=>CH2O(+M)                     1.090E+12    0.480   -260.00           
          // LOW  /  1.350E+24   -2.570   1425.00/                                      
          // TROE/  0.7824  271.00  2755.00  6570.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // H+HCO<=>H2+CO                            7.340E+13    0.000      0.00           
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "HCO•", "H•" ], productNames: [ "CH₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        EActivation:  0.0, lifetimeActivated: 1000
+    },
+    // H+HCO<=>H2+CO                            7.340E+13    0.000      0.00
+    {
+        reactantNames: [ "HCO•", "H•" ], productNames: [ "CO", "H₂" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  0.0, // Slight change in reverse collision geometry to allow room for H2CO formation.
+    },
     // H+CH2O(+M)<=>CH3O(+M)                    5.400E+11    0.454   2600.00           
          // LOW  /  2.200E+30   -4.800   5560.00/                                      
          // TROE/  0.7580   94.00  1555.00  4200.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/                      
-    // H+CH2O<=>HCO+H2                          2.300E+10    1.050   3275.00           
-    // H+CH3O<=>OH+CH3                          3.200E+13    0.000      0.00           
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/
+    {
+        reactantNames: [ "CH₂O", "H•" ], productNames: [ "CH₃O•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 120, 360 ],
+        EActivation:  1.09, lifetimeActivated: 1000
+    },
+    // H+CH2O<=>HCO+H2                          2.300E+10    1.050   3275.00
+    {
+        reactantNames: [ "CH₂O", "H•" ], productNames: [ "HCO•", "H₂" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 240, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  1.37,
+    },
+    // H+CH3O<=>OH+CH3                          3.200E+13    0.000      0.00
+    {
+        reactantNames: [ "CH₃O•", "H•" ], productNames: [ "CH₃•", "HO•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 180 ],
+        EActivation:  0.0,
+    },
     // H+C2H2(+M)<=>C2H3(+M)                    5.600E+12    0.000   2400.00           
          // LOW  /  3.800E+40   -7.270   7220.00/                                      
          // TROE/  0.7507   98.50  1302.00  4167.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "C₂H₂", "H•" ], productNames: [ "C₂H₃•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        EActivation:  1.00, lifetimeActivated: 1000
+    },
     // H+C2H3(+M)<=>C2H4(+M)                    6.080E+12    0.270    280.00           
          // LOW  /  1.400E+30   -3.860   3320.00/                                      
          // TROE/  0.7820  207.50  2663.00  6095.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // H+C2H3<=>H2+C2H2                         3.000E+13    0.000      0.00           
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "C₂H₃•", "H•" ], productNames: [ "C₂H₄" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        EActivation:  0.12, lifetimeActivated: 1000
+    },
+    // H+C2H3<=>H2+C2H2                         3.000E+13    0.000      0.00
+    {
+        reactantNames: [ "C₂H₃•", "H•" ], productNames: [ "C₂H₂", "H₂" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 360 ],
+        EActivation:  0.0,
+    },
     // H+C2H4(+M)<=>C2H5(+M)                    1.080E+12    0.454   1820.00           
          // LOW  /  1.200E+42   -7.620   6970.00/                                      
          // TROE/  0.9753  210.00   984.00  4374.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // H+C2H4<=>C2H3+H2                         1.325E+06    2.530  12240.00           
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "C₂H₄", "H•" ], productNames: [ "C₂H₅•" ],
+        reactantAngles: [  90,   0 ], reactantAngleRanges: [  90, 360 ],
+        EActivation:  0.76, lifetimeActivated: 1000
+    },
+    {
+        reactantNames: [ "C₂H₄", "H•" ], productNames: [ "C₂H₅•" ],
+        reactantAngles: [ 270,   0 ], reactantAngleRanges: [  90, 360 ],
+        EActivation:  0.76, lifetimeActivated: 1000, bDoReverse: false
+    },    
+    // H+C2H4<=>C2H3+H2                         1.325E+06    2.530  12240.00
+    {
+        reactantNames: [ "C₂H₄", "H•" ], productNames: [ "C₂H₃•", "H₂" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  5.12,
+    },
+    {
+        reactantNames: [ "C₂H₄", "H•" ], productNames: [ "C₂H₃•", "H₂" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  5.12, bDoReverse: false
+    },
     // H+C2H5(+M)<=>C2H6(+M)                    5.210E+17   -0.990   1580.00           
          // LOW  /  1.990E+41   -7.080   6685.00/                                      
          // TROE/  0.8422  125.00  2219.00  6882.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // H+C2H6<=>C2H5+H2                         1.150E+08    1.900   7530.00           
-    // H2+CO(+M)<=>CH2O(+M)                     4.300E+07    1.500  79600.00           
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "C₂H₅•", "H•" ], productNames: [ "C₂H₆" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        EActivation:  0.66, lifetimeActivated: 1000
+    },
+    // H+C2H6<=>C2H5+H2                         1.150E+08    1.900   7530.00
+    {
+        reactantNames: [ "C₂H₆", "H•" ], productNames: [ "C₂H₅•", "H₂" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  3.15,
+    },
+    // H2+CO(+M)<=>CH2O(+M)                     4.300E+07    1.500  79600.00
          // LOW  /  5.070E+27   -3.420  84350.00/                                      
          // TROE/  0.9320  197.00  1540.00 10300.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // OH+H2<=>H+H2O                            2.160E+08    1.510   3430.00           
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "H₂", "CO" ], productNames: [ "CH₂O" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 360, 180 ],
+        EActivation: 33.3, lifetimeActivated: 1000, bDoReverse: false
+    },
+    // OH+H2<=>H+H2O                            2.160E+08    1.510   3430.00
+    {
+        reactantNames: [ "H₂", "HO•" ], productNames: [ "H•", "H₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 180 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 240 ],
+        EActivation:  1.43,
+    },
     // 2OH(+M)<=>H2O2(+M)                       7.400E+13   -0.370      0.00           
          // LOW  /  2.300E+18   -0.900  -1700.00/                                      
          // TROE/  0.7346   94.00  1756.00  5182.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // 2OH<=>O+H2O                              3.570E+04    2.400  -2110.00           
-    // OH+HO2<=>O2+H2O                          2.900E+13    0.000   -500.00           
-    // OH+H2O2<=>HO2+H2O                        5.800E+14    0.000   9560.00           
-    // OH+CH2<=>H+CH2O                          2.000E+13    0.000      0.00           
-    // OH+CH2(S)<=>H+CH2O                       3.000E+13    0.000      0.00           
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "HO•", "HO•" ], productNames: [ "H₂O₂" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 180 ],
+        EActivation:  0.0, lifetimeActivated: 1000,
+    },
+    // 2OH<=>O+H2O                              3.570E+04    2.400  -2110.00
+    {
+        reactantNames: [ "HO•", "HO•" ], productNames: [ "O•", "H₂O" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 240 ],
+        EActivation:  0.0,
+    },
+    {
+        reactantNames: [ "HO•", "HO•" ], productNames: [ "H₂O", "O•" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 240, 360 ],
+        EActivation:  0.0, bDoReverse: false
+    },
+    // OH+HO2<=>O2+H2O                          2.900E+13    0.000   -500.00
+    {
+        reactantNames: [ "HO₂•", "HO•" ], productNames: [ "O₂", "H₂O" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 240 ],
+        EActivation:  0.0,
+    },
+    // OH+H2O2<=>HO2+H2O                        5.800E+14    0.000   9560.00
+    {
+        reactantNames: [ "H₂O₂", "HO•" ], productNames: [ "HO₂•", "H₂O" ],
+        reactantAngles: [  45,   0 ], reactantAngleRanges: [  90, 180 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 180, 240 ],
+        EActivation:  4.00,
+    },
+    {
+        reactantNames: [ "H₂O₂", "HO•" ], productNames: [ "HO₂•", "H₂O" ],
+        reactantAngles: [ 225,   0 ], reactantAngleRanges: [  90, 180 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 180, 240 ],
+        EActivation:  4.00, bDoReverse: false
+    },
+    // OH+CH2<=>H+CH2O                          2.000E+13    0.000      0.00
+    // OH+CH2(S)<=>H+CH2O                       3.000E+13    0.000      0.00
+    {
+        reactantNames: [ "HO•", "CH₂•" ], productNames: [ "H•", "CH₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 120 ],
+        EActivation:  0.0,
+    },
     // OH+CH3<=>CH2+H2O                         5.600E+07    1.600   5420.00           
-    // OH+CH3<=>CH2(S)+H2O                      2.501E+13    0.000      0.00           
-    // OH+CH4<=>CH3+H2O                         1.000E+08    1.600   3120.00           
-    // OH+CO<=>H+CO2                            4.760E+07    1.228     70.00           
-    // OH+HCO<=>H2O+CO                          5.000E+13    0.000      0.00           
-    // OH+CH2O<=>HCO+H2O                        3.430E+09    1.180   -447.00           
-    // OH+C2H2<=>CH3+CO                         4.830E-04    4.000  -2000.00           
-    // OH+C2H3<=>H2O+C2H2                       5.000E+12    0.000      0.00           
-    // OH+C2H4<=>C2H3+H2O                       3.600E+06    2.000   2500.00           
-    // OH+C2H6<=>C2H5+H2O                       3.540E+06    2.120    870.00           
+    // OH+CH3<=>CH2(S)+H2O                      2.501E+13    0.000      0.00
+    {
+        reactantNames: [ "CH₃•", "HO•" ], productNames: [ "CH₂•", "H₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 180 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 180, 240 ],
+        EActivation:  2.26,
+    },
+    // OH+CH4<=>CH3+H2O                         1.000E+08    1.600   3120.00
+    {
+        reactantNames: [ "CH₄", "HO•" ], productNames: [ "CH₃•", "H₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 180 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 240 ],
+        EActivation:  1.31,
+    },
+    // OH+CO<=>H+CO2                            4.760E+07    1.228     70.00
+    {
+        reactantNames: [ "HO•", "CO" ], productNames: [ "H•", "CO₂" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 360 ],
+        EActivation:  0.03,
+    },
+    // OH+HCO<=>H2O+CO                          5.000E+13    0.000      0.00
+    {
+        reactantNames: [ "HCO•", "HO•" ], productNames: [ "H₂O", "CO" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [ 180, 180 ], productAngleRanges:  [ 240, 180 ],
+        EActivation:  0.0,
+    },
+    // OH+CH2O<=>HCO+H2O                        3.430E+09    1.180   -447.00
+    {
+        reactantNames: [ "CH₂O", "HO•" ], productNames: [ "H₂O", "HCO•" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 240, 180 ],
+        productAngles:  [ 180, 180 ], productAngleRanges:  [ 240, 180 ],
+        EActivation:  0.0,
+    },
+    // OH+C2H2<=>CH3+CO                         4.830E-04    4.000  -2000.00
+    {
+        reactantNames: [ "C₂H₂", "HO•" ], productNames: [ "CH₃•", "CO" ],
+        reactantAngles: [  90,  90 ], reactantAngleRanges: [  90,  90 ],
+        productAngles:  [   0,  90 ], productAngleRanges:  [ 360, 180 ],
+        angleReactionOffset:  90,
+        EActivation:  0.0, bDoReverse: false // Make inverse reaction unlikely due to energy diff.
+    },
+    {
+        reactantNames: [ "C₂H₂", "HO•" ], productNames: [ "CH₃•", "CO" ],
+        reactantAngles: [ 270,  90 ], reactantAngleRanges: [  90,  90 ],
+        productAngles:  [   0,  90 ], productAngleRanges:  [ 360, 180 ],
+        angleReactionOffset:  90,
+        EActivation:  0.0, bDoReverse: false // Make inverse reaction unlikely due to energy diff.
+    },
+    {
+        reactantNames: [ "C₂H₂", "HO•" ], productNames: [ "CH₃•", "CO" ],
+        reactantAngles: [  90, 270 ], reactantAngleRanges: [  90,  90 ],
+        productAngles:  [   0, 270 ], productAngleRanges:  [ 360, 180 ],
+        angleReactionOffset: 270,
+        EActivation:  0.0, bDoReverse: false // Make inverse reaction unlikely due to energy diff.
+    },
+    {
+        reactantNames: [ "C₂H₂", "HO•" ], productNames: [ "CH₃•", "CO" ],
+        reactantAngles: [ 270, 270 ], reactantAngleRanges: [  90,  90 ],
+        productAngles:  [   0, 270 ], productAngleRanges:  [ 360, 180 ],
+        angleReactionOffset: 270,
+        EActivation:  0.0, bDoReverse: false // Make inverse reaction unlikely due to energy diff.
+    },
+    // OH+C2H3<=>H2O+C2H2                       5.000E+12    0.000      0.00
+    {
+        reactantNames: [ "HO•", "C₂H₃•" ], productNames: [ "H₂O", "C₂H₂" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [ 180,  90 ], productAngleRanges:  [ 240,  90 ],
+        EActivation:  0.0,
+    },
+    {
+        reactantNames: [ "HO•", "C₂H₃•" ], productNames: [ "H₂O", "C₂H₂" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [ 180, 270 ], productAngleRanges:  [ 240,  90 ],
+        EActivation:  0.0, bDoForward: false
+    },
+    // OH+C2H4<=>C2H3+H2O                       3.600E+06    2.000   2500.00
+    {
+        reactantNames: [ "HO•", "C₂H₄" ], productNames: [ "H₂O", "C₂H₃•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 240, 180 ],
+        EActivation: 1.05,
+    },
+    // OH+C2H6<=>C2H5+H2O                       3.540E+06    2.120    870.00
+    {
+        reactantNames: [ "HO•", "C₂H₆" ], productNames: [ "H₂O", "C₂H₅•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 240, 180 ],
+        EActivation: 0.36,
+    },
     // 2HO2<=>O2+H2O2                           1.300E+11    0.000  -1630.00           
      // DUPLICATE                                                                      
     // 2HO2<=>O2+H2O2                           4.200E+14    0.000  12000.00           
-     // DUPLICATE                                                                      
-    // HO2+CH2<=>OH+CH2O                        2.000E+13    0.000      0.00           
-    // HO2+CH3<=>O2+CH4                         1.000E+12    0.000      0.00           
-    // HO2+CH3<=>OH+CH3O                        2.000E+13    0.000      0.00           
-    // HO2+CO<=>OH+CO2                          1.500E+14    0.000  23600.00           
-    // HO2+CH2O<=>HCO+H2O2                      1.000E+12    0.000   8000.00           
-    // CH2+O2<=>OH+HCO                          1.320E+13    0.000   1500.00           
-    // CH2+H2<=>H+CH3                           5.000E+05    2.000   7230.00           
-    // 2CH2<=>H2+C2H2                           3.200E+13    0.000      0.00           
-    // CH2+CH3<=>H+C2H4                         4.000E+13    0.000      0.00           
-    // CH2+CH4<=>2CH3                           2.460E+06    2.000   8270.00           
-    // CH2(S)+N2<=>CH2+N2                       1.500E+13    0.000    600.00           
-    // CH2(S)+AR<=>CH2+AR                       9.000E+12    0.000    600.00           
-    // CH2(S)+O2<=>H+OH+CO                      2.800E+13    0.000      0.00           
-    // CH2(S)+O2<=>CO+H2O                       1.200E+13    0.000      0.00           
-    // CH2(S)+H2<=>CH3+H                        7.000E+13    0.000      0.00           
-    // CH2(S)+H2O<=>CH2+H2O                     3.000E+13    0.000      0.00           
-    // CH2(S)+CH3<=>H+C2H4                      1.200E+13    0.000   -570.00           
-    // CH2(S)+CH4<=>2CH3                        1.600E+13    0.000   -570.00           
-    // CH2(S)+CO<=>CH2+CO                       9.000E+12    0.000      0.00           
-    // CH2(S)+CO2<=>CH2+CO2                     7.000E+12    0.000      0.00           
-    // CH2(S)+CO2<=>CO+CH2O                     1.400E+13    0.000      0.00           
-    // CH3+O2<=>O+CH3O                          2.675E+13    0.000  28800.00           
-    // CH3+O2<=>OH+CH2O                         3.600E+10    0.000   8940.00           
-    // CH3+H2O2<=>HO2+CH4                       2.450E+04    2.470   5180.00           
+     // DUPLICATE
+    { 
+        reactantNames: [ "HO₂•", "HO₂•" ], productNames: [ "O₂", "H₂O₂" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [   0,  45 ], productAngleRanges:  [ 360,  90 ],
+        EActivation: 5.02, bDoReverse: false,
+    },
+    { 
+        reactantNames: [ "HO₂•", "HO₂•" ], productNames: [ "H₂O₂", "O₂" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [  45,   0 ], productAngleRanges:  [  90, 360 ],
+        EActivation: 5.02,
+    },
+    {
+        reactantNames: [ "HO₂•", "HO₂•" ], productNames: [ "H₂O₂", "O₂" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [ 225,   0 ], productAngleRanges:  [  90, 360 ],
+        EActivation: 5.02, bDoForward: false,
+    },
+    // HO2+CH2<=>OH+CH2O                        2.000E+13    0.000      0.00
+    {
+        reactantNames: [ "HO₂•", "CH₂•" ], productNames: [ "HO•", "CH₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 0.0,
+    },
+    // HO2+CH3<=>O2+CH4                         1.000E+12    0.000      0.00
+    {
+        reactantNames: [ "HO₂•", "CH₃•" ], productNames: [ "O₂", "CH₄" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 360 ],
+        EActivation: 0.0,
+    },
+    // HO2+CH3<=>OH+CH3O                        2.000E+13    0.000      0.00
+    {
+        reactantNames: [ "HO₂•", "CH₃•" ], productNames: [ "HO•", "CH₃O•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 0.0,
+    },
+    // HO2+CO<=>OH+CO2                          1.500E+14    0.000  23600.00
+    {
+        reactantNames: [ "HO₂•", "CO" ], productNames: [ "HO•", "CO₂" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation: 9.87,
+    },
+    // HO2+CH2O<=>HCO+H2O2                      1.000E+12    0.000   8000.00
+    {
+        reactantNames: [ "CH₂O", "HO₂•" ], productNames: [ "HCO•", "H₂O₂" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [ 180,  45 ], productAngleRanges:  [ 180,  90 ],
+        EActivation: 3.35,
+    },
+    {
+        reactantNames: [ "CH₂O", "HO₂•" ], productNames: [ "HCO•", "H₂O₂" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [ 180, 225 ], productAngleRanges:  [ 180,  90 ],
+        EActivation: 3.35, bDoForward: false
+    },
+    // CH2+O2<=>OH+HCO                          1.320E+13    0.000   1500.00
+    {
+        reactantNames: [ "O₂", "CH₂•" ], productNames: [ "HO•", "HCO•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 180 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 0.63,
+    },
+    // CH2(S)+O2<=>CO+H2O                       1.200E+13    0.000      0.00
+    {
+        reactantNames: [ "O₂", "CH₂•" ], productNames: [ "H₂O", "CO" ],
+        reactantAngles: [   0, 180 ], reactantAngleRanges: [ 360, 180 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 120, 240 ],
+        EActivation: 0.0,
+    },
+    // CH2+H2<=>H+CH3                           5.000E+05    2.000   7230.00
+    // CH2(S)+H2<=>CH3+H                        7.000E+13    0.000      0.00    
+    {
+        reactantNames: [ "H₂", "CH₂•" ], productNames: [ "H•", "CH₃•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 180 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 360 ],
+        EActivation: 3.03,
+    },
+    // 2CH2<=>H2+C2H2                           3.200E+13    0.000      0.00
+    {
+        reactantNames: [ "CH₂•", "CH₂•" ], productNames: [ "H₂", "C₂H₂" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [   0,  90 ], productAngleRanges:  [ 360, 90 ],
+        angleReactionOffset:  90,        
+        EActivation: 0.0,
+    },
+    {
+        reactantNames: [ "CH₂•", "CH₂•" ], productNames: [ "H₂", "C₂H₂" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 180 ],
+        productAngles:  [   0, 270 ], productAngleRanges:  [ 360, 90 ],
+        angleReactionOffset:  90,
+        EActivation: 0.0, bDoForward: false
+    },
+    // CH2+CH3<=>H+C2H4                         4.000E+13    0.000      0.00
+    // CH2(S)+CH3<=>H+C2H4                      1.200E+13    0.000   -570.00    
+    {
+        reactantNames: [ "CH₂•", "CH₃•" ], productNames: [ "H•", "C₂H₄" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0,  90 ], productAngleRanges:  [ 360, 90 ],
+        angleReactionOffset:  90,        
+        EActivation: 0.0,
+    },    
+    {
+        reactantNames: [ "CH₂•", "CH₃•" ], productNames: [ "H•", "C₂H₄" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0, 270 ], productAngleRanges:  [ 360, 90 ],
+        angleReactionOffset:  90,        
+        EActivation: 0.0, bDoForward: false
+    },    
+    // CH2+CH4<=>2CH3                           2.460E+06    2.000   8270.00
+    // CH2(S)+CH4<=>2CH3                        1.600E+13    0.000   -570.00
+    // CH2(S)+CH4<=>2CH3                        1.600E+13    0.000   -570.00               
+    {
+        reactantNames: [ "CH₄", "CH₂•" ], productNames: [ "CH₃•", "CH₃•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 180 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 360 ],
+        EActivation: 3.46, bDoReverse: false // Avoid clashing with C2H6 formation.
+    },
+    // CH2(S)+CO2<=>CO+CH2O                     1.400E+13    0.000      0.00    
+    {
+        reactantNames: [ "CO₂", "CH₂•" ], productNames: [ "CO", "CH₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 180 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 0.0,
+    },
+    // = = Ignore below reactions
+    // CH2(S)+N2<=>CH2+N2                       1.500E+13    0.000    600.00    
+    // CH2(S)+AR<=>CH2+AR                       9.000E+12    0.000    600.00
+    // CH2(S)+H2O<=>CH2+H2O                     3.000E+13    0.000      0.00
+    // CH2(S)+CO<=>CH2+CO                       9.000E+12    0.000      0.00
+    // CH2(S)+CO2<=>CH2+CO2                     7.000E+12    0.000      0.00               
+    // CH2(S)+O2<=>H+OH+CO                      2.800E+13    0.000      0.00
+    // = = Ignore Above reactions = =     
+    // CH3+O2<=>O+CH3O                          2.675E+13    0.000  28800.00
+    {
+        reactantNames: [ "O₂", "CH₃•" ], productNames: [ "O•", "CH₃O•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 360, 180 ],
+        EActivation: 12.50, bDoForward: false // DeltaH: +125 kJ/mol. Outcompeted with no 2D symmetry left.
+    },
+    // CH3+O2<=>OH+CH2O                         3.600E+10    0.000   8940.00
+    {
+        reactantNames: [ "O₂", "CH₃•" ], productNames: [ "HO•", "CH₂O" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 180, 180 ],
+        EActivation: 3.74,
+    },
+    // CH3+H2O2<=>HO2+CH4                       2.450E+04    2.470   5180.00
+    {
+        reactantNames: [ "H₂O₂", "CH₃•" ], productNames: [ "HO₂•", "CH₄" ],
+        reactantAngles: [  45,   0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation: 2.17,
+    },
+    {
+        reactantNames: [ "H₂O₂", "CH₃•" ], productNames: [ "HO₂•", "CH₄" ],
+        reactantAngles: [ 225,   0 ], reactantAngleRanges: [  90, 360 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation: 2.17, bDoReverse: false
+    },    
     // 2CH3(+M)<=>C2H6(+M)                      2.120E+16   -0.970    620.00           
          // LOW  /  1.770E+50   -9.670   6220.00/                                      
          // TROE/  0.5325  151.00  1038.00  4970.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // 2CH3<=>H+C2H5                            4.990E+12    0.100  10600.00           
-    // CH3+HCO<=>CH4+CO                         2.648E+13    0.000      0.00           
-    // CH3+CH2O<=>HCO+CH4                       3.320E+03    2.810   5860.00           
-    // CH3+C2H4<=>C2H3+CH4                      2.270E+05    2.000   9200.00           
-    // CH3+C2H6<=>C2H5+CH4                      6.140E+06    1.740  10450.00           
-    // HCO+H2O<=>H+CO+H2O                       2.244E+18   -1.000  17000.00           
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "CH₃•", "CH₃•" ], productNames: [ "C₂H₆" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        EActivation:  0.26, lifetimeActivated: 1000,
+    },
+    // 2CH3<=>H+C2H5                            4.990E+12    0.100  10600.00
+    {
+        reactantNames: [ "CH₃•", "CH₃•" ], productNames: [ "H•","C₂H₅•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 180 ],
+        EActivation:  4.6, bDoForward: false // DeltaH: 46 kJ/mol . Outcompeted by above.
+    },
+    // CH3+HCO<=>CH4+CO                         2.648E+13    0.000      0.00
+    {
+        reactantNames: [ "HCO•", "CH₃•" ], productNames: [ "CO", "CH₄" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  0.0,
+    },
+    // CH3+CH2O<=>HCO+CH4                       3.320E+03    2.810   5860.00
+    {
+        reactantNames: [ "CH₂O", "CH₃•" ], productNames: [ "HCO•", "CH₄" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [ 180,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  2.45,
+    },
+    // CH3+C2H4<=>C2H3+CH4                      2.270E+05    2.000   9200.00
+    {
+        reactantNames: [ "C₂H₄", "CH₃•" ], productNames: [ "C₂H₃•", "CH₄" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  3.85,
+    },
+    // CH3+C2H6<=>C2H5+CH4                      6.140E+06    1.740  10450.00               
+    {
+        reactantNames: [ "C₂H₆", "CH₃•" ], productNames: [ "C₂H₅•", "CH₄" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 360, 360 ],
+        productAngles:  [   0,   0 ], productAngleRanges:  [ 180, 360 ],
+        EActivation:  4.37,
+    },
+    // HCO+H2O<=>H+CO+H2O                       2.244E+18   -1.000  17000.00
     // HCO+M<=>H+CO+M                           1.870E+17   -1.000  17000.00           
     // H2/2.00/ H2O/0.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/                      
-    // HCO+O2<=>HO2+CO                          7.600E+12    0.000    400.00           
-    // CH3O+O2<=>HO2+CH2O                       4.280E-13    7.600  -3530.00           
-    // C2H3+O2<=>HCO+CH2O                       3.980E+12    0.000   -240.00           
+    {
+        reactantNames: [ "CO", "H•" ], productNames: [ "HCO•" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        EActivation:  7.11, lifetimeActivated: 1000,
+    },    
+    // HCO+O2<=>HO2+CO                          7.600E+12    0.000    400.00
+    {
+        reactantNames: [ "HCO•", "O₂" ], productNames: [ "CO", "HO₂•" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [ 180, 180 ], productAngleRanges:  [ 180, 180 ],
+        EActivation:  0.17,
+    },
+    // CH3O+O2<=>HO2+CH2O                       4.280E-13    7.600  -3530.00
+    {
+        reactantNames: [ "CH₃O•", "O₂" ], productNames: [ "CH₂O", "HO₂•" ],
+        reactantAngles: [ 180,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [ 180, 180 ], productAngleRanges:  [ 180, 180 ],
+        EActivation:  0.0,
+    },    
+    // C2H3+O2<=>HCO+CH2O                       3.980E+12    0.000   -240.00
+    {
+        reactantNames: [ "C₂H₃•", "O₂" ], productNames: [ "CH₂O", "HCO•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 180, 180 ],
+        EActivation:  0.0,
+    },    
     // C2H4(+M)<=>H2+C2H2(+M)                   8.000E+12    0.440  88770.00           
          // LOW  /  7.000E+50   -9.310  99860.00/                                      
          // TROE/  0.7345  180.00  1035.00  5417.00 /                                  
-    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/             
-    // C2H5+O2<=>HO2+C2H4                       8.400E+11    0.000   3875.00       
+    // H2/2.00/ H2O/6.00/ CH4/2.00/ CO/1.50/ CO2/2.00/ C2H6/3.00/ AR/0.70/
+    {
+        reactantNames: [ "C₂H₂", "H₂" ], productNames: [ "C₂H₄" ],
+        reactantAngles: [ 90,   0 ], reactantAngleRanges: [ 90, 360 ],
+        EActivation: 37.14, lifetimeActivated: 1000,
+    },
+    {
+        reactantNames: [ "C₂H₂", "H₂" ], productNames: [ "C₂H₄" ],
+        reactantAngles: [ 270,   0 ], reactantAngleRanges: [ 90, 360 ],
+        EActivation: 37.14, lifetimeActivated: 1000, bDoReverse: false
+    },
+    // C2H5+O2<=>HO2+C2H4                       8.400E+11    0.000   3875.00
+    {
+        reactantNames: [ "C₂H₅•", "O₂" ], productNames: [ "C₂H₄", "HO₂•" ],
+        reactantAngles: [   0,   0 ], reactantAngleRanges: [ 180, 360 ],
+        productAngles:  [   0, 180 ], productAngleRanges:  [ 360, 180 ],
+        EActivation:  1.62,
+    },
 ]
