@@ -79,12 +79,12 @@ and then resolved. All collisions are simple, elastic collisions if a reaction d
 
 When a reaction does, the simulation keeps track by deleting reactants and creating products as needed. In this toy model, energy is conserved by redistributing changes due to heats of reaction (ΔH) between the products. This means momentum is no longer conserved. (Note: quantum mechanics and internal motions are needed to conserve both energy and momentum in a reaction process.)
 
-Every ~10 steps, the average velocity and rotation across all molecules is removed (center-of-mass motion), with its energy redistributed into the individual molecule motions.[^2] Information about the simulation is collected regularly and shown in the side tabs.
+Every ~10 steps, the average velocity and rotation across all molecules is removed (center-of-mass motion), with its energy redistributed by rescaling individual molecule motions.[^2] Information about the simulation is collected regularly and shown in the side tabs.
 
 [^1]: Although fun, it is not feasible to code in all possible reactions. If I want to include a comprehensive but not exhaustive list of intermediates in a methane-oxygen combustion, I would want around 20 molecules types and 50 equilbirium reactions. Add in nitrogen to make it methane-air and this can rise to 53 molecules types and 325 reactions ( see: https://www.cerfacs.fr/cantera/mechanisms/meth.php ). For the purposes of the accuracy, one would also want to look up the Arrhenius activation energies for every pair.
 
 [^2]: This mitigates a common phenomenon for dense simulations where the system of molecules spontaneously begin rotating and moving like a 
-single entity. For this toy model, this happens because we don't respect the momentum and energy conservation laws during collisions; energy is supposed to be absorbed/released into the internal vibrations of molecules, but in this model it has to go somewhere else.
+single entity (the flying ice-cube phenomena). For this toy model, this happens because we don't respect the momentum and energy conservation laws during collisions; energy is supposed to be absorbed/released into the internal vibrations of molecules, but in this model it has to go into either the RE or KE.
 
 There are industry-standard ways to redistribute this energy across the whole system such that it doesn't cause the "flying ice-cube" artefact. This isn't within scope for our purposes. With the basic center-of-mass motions removed, what you'll see instead in a hot, dense reacting gas are the next collective motions: either the gas swirls in two circles like a convection current, or (if the simulation box is narrow enough) dense aggregates moves back-and-forth like bouncing waves.
 
@@ -98,7 +98,7 @@ WebAssembly and parallelisation are items on my wishlist in order to speed thing
 
 ### Known bugs
 
-1. Temperature exchange resampling on collision isn't what is expected. The equilibrium system temperature is currently slightly lower than the world temperature for most setups, e.g. 190K when world temperature is set to 200K. This seems to be because faster molecules expereince redistribution more often and thus presents a negative bias on the actual temperature. An artificial factor (1.38) is currently applied to the Maxwell 2D velocity distribution to keep the simulation from being too cool relative to the outside world.
+1. Heat transfer via wall collisions isn't currently implemented correctly/rigorously. The equilibrium system temperature will be lower because faster moleulces experience more collisions that would reset their kinetic energies. Thus, an artificial scaling factor (1.38) is currently applied to the Maxwell 2D velocity distribution to keep the simulation from being too cool relative to the outside world.
 
 
 
