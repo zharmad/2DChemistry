@@ -2,7 +2,7 @@
 
 An atom-based simulation engine; designed to help secondary to early-tertiary students understand core chemistry concepts and visualise common gas-phase natural phenomena & industrial applications. A web demo is available at my GitHub Page: https://zharmad.github.io/2DChemistry/
 
-Based on my preliminary testing (Feb 2023), the performance on Firefox is generally better than Chrome.
+Based on my preliminary testing (latest May 2024), the performance on Firefox is generally better than Chrome.
 
 ## What this is for
 
@@ -30,6 +30,7 @@ In other words, this software has been written to succeed the pHET Reactions & r
 - **Iodine gas** is purple because the decomposition reaction from di-iodine into iodine radicals has an activation energy roughly equal to the energy of a green photon. 
 - (Wishlist) Nitro catalyses combustion reactions by providing reaction paths with significantly lower energy barriers.
 
+
 ## Approximations relative to the real world
 
 1. Space is two-dimensional.
@@ -45,21 +46,24 @@ The units of measurements in this toy model include Kelvins (K), nano/picometers
 
 ## Current feature set
 
-- A set of example models, in which starting conditions can be freely modified:
-    - initial gas compositoin
-    - starting areas and temperatures.
-- Dynamic adjustments of overall conditions:
-    - Temperature for now. Area is WIP, adding and removing species will be next.
+- A set of example gas compositions and reactions.
+- Starting conditions for the above composition.
+    - initial parameters: composition, area, density, and temperature.
+- Dynamic control of gas parameters:
+    - External world temperature for equilibration, and externally controlled area.
 - Acceptable performance up to ~10,000 atoms on PC and on mobile.
-- Basic analysis pipeline, with graphs that can be directly exported via the HTML5 Canvas interface.
-    - Aggregate measures: temperature, pressure, area, density, etc.
-    - species count.
+- Basic recording of data over time:
+    - Gas paramters: temperature, pressure, area, density, etc.
+    - Composition.
+    - Available as a dynamics Chart.JS graph, and a manual WIP export to CSV.
 - Displays reaction diagrams for each step of the reaction pathway.
 
-- (Partial) Easy workflow to pre-generate starting conditions for specific lessons as individual web pages.
+- (Partial) Carbon combustion and NOx decomposition pathways to showcase the underlyin complexity of reaction intermediates.
+- (Partial) Customised starting compositions is now mostly done by manually creating the conditions and saving to clipboard.
 - (Partial) Control: User interface to adjust what each graph shows.
+- (Partial) Graph data can be exported to CSV, but the CSV is ugly.
 - (Wishlist) Modify the reaction energies and watch responses. This will probably need a graph theory behind the scenes to ensure consistent energies.
-- (Wishlist) Control of simulation box area to model area effects. (Currently on μVT and μVE conditions).
+- (Wishlist) NPT and NPE conditions that permit the gas to do work on a box wall or four. (Currently on μVT and μVE conditions).
 - (Wishlist) Control: User interface to add and remove molecules so as to simulate industrial steps, e.g. during the conversion of sulfur dioxide pollutant into useful sulfuric acid.
 - (Wishlist) Moddability: User interface to create molecules and reactions of their own.
 - (Wishlist) Feature: Dedicate one wall for a surface catalyst. This enables Haber process catalysis and many others used in industry.
@@ -91,3 +95,10 @@ The reason this engine doesn't do liquid-phase and solid phase is that you ideal
 Still haven't split the configuration into JSON files, but the hooks have been set.
 
 WebAssembly and parallelisation are items on my wishlist in order to speed things up a bit more. The current bottleneck is testing every pair of molecules to check if they are within collision range. This is particle-mesh Ewald territory for liquid-phase simulations with 10^6 atoms, but I think a simple parallelisation solution should be sufficient.
+
+### Known bugs
+
+1. Temperature exchange resampling on collision isn't what is expected. The equilibrium system temperature is currently slightly lower than the world temperature for most setups, e.g. 190K when world temperature is set to 200K. This seems to be because faster molecules expereince redistribution more often and thus presents a negative bias on the actual temperature. An artificial factor (1.38) is currently applied to the Maxwell 2D velocity distribution to keep the simulation from being too cool relative to the outside world.
+
+
+
