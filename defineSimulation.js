@@ -26,9 +26,11 @@ class Simulation {
         //this.dt          = 50; //Basically in ~ picoseconds. average velocity of 2D oxygen molecule is ~300 ms^-1, or 30 px per timestep.       
         this.temperature = 300;
         this.bSet = false;
-        this.bHeatExchange = true ;
-        this.bWorldGravity = false ;
-        this.world_gravity = new Vector2D( 0, 9.81e-6 ); // Hardcode gravity for now at 10^12 g. Positive y is down for the canvas!
+        
+        this.bHeatExchange = true ;        
+        this.wallThermalConductivity = 1.0 ;
+        this.bDoWorldGravity = false ;
+        this.vecWorldGravity = new Vector2D( 0, 9.81e-18 ); // 1 g. Positive y is down for the canvas!        
         
         this.timeFactor = 0.001; // Convert time units from picoseconds, by default to femtoseconds.
         this.distScale  = 10; // Convert spatial units. Currently used to convert pm to pixels.        
@@ -106,10 +108,13 @@ class Simulation {
     
     set_world_temperature( T ) { this.temperature = T; }
     get_world_temperature() { return this.temperature; }
-    set_bool_heat_exchange( bool ) { this.bHeatExchange = bool; }
-    get_bool_heat_exchange() { return this.bHeatExchange; }
-    set_bool_world_gravity( bool ) { this.bWorldGravity = bool; }
-    get_bool_world_gravity() { return this.bWorldGravity; }
+    set_wall_thermal_conductivity( k ) { this.wallThermalConductivity = k ; this.bHeatExchange = ( 0 < k ); }
+    get_wall_thermal_conductivity() { return this.wallThermalConductivity; }         
+    set_world_gravity_multiplier( f ) {
+        this.bDoWorldGravity = ( -1 < f );
+        if ( -1 < f ) { this.vecWorldGravity[1] = globalVars.gravitationalConstant * 10 ** f ; }
+    }
+    get_world_gravity() { return this.vecWorldGravity; }
   
     set_world_length_scale( x ) {
         this.distScale = x ;
@@ -160,8 +165,8 @@ class Simulation {
         this.set_world_length_scale( globalVars.distScale );
         this.set_world_boundaries( globalVars.worldWidth, globalVars.worldHeight );
         this.set_world_temperature( globalVars.temperature );
-        this.set_bool_heat_exchange( globalVars.bHeatExchange );
-        this.set_bool_world_gravity( globalVars.bWorldGravity );
+        this.set_wall_thermal_conductivity( globalVars.wallThermalConductivity );
+        this.set_world_gravity_multiplier( globalVars.worldGravityMultiplier );
         //this.set_target_number_of_molecules( globalVars.numMolecules );
         this.set_target_nMols_by_density( globalVars.densMolecules * 1e-6 );
         this.set_statistics_update_interval( globalVars.statisticsUpdateInterval );
@@ -697,9 +702,9 @@ class Simulation {
         }
                 
         // Simple movement
-        if ( this.bWorldGravity ) {            
+        if ( this.bDoWorldGravity ) {            
             for (const mol of this.molecules) {
-                mol.update_position_with_acceleration( dt, this.world_gravity );
+                mol.update_position_with_acceleration( dt, this.vecWorldGravity );
             }
         } else {
             for (const mol of this.molecules) {
@@ -820,8 +825,6 @@ class Simulation {
     // const impulse = f * vel1PInit.dot(vecN) * (1 + elasticity) ;
     // Function returns the change in momentum.
     process_wall_collisions(mol) {
-        const fracExchange = 0.5;
-        // Temporary placeholder for heat exchange efficiency.
         const xBounds = this.xBounds, yBounds = this.yBounds;
         const s = mol.size, p = mol.p, v = mol.v ;
         let bCollideX = false, bCollideY = false, bMovingWall = false;        
@@ -857,7 +860,7 @@ class Simulation {
         
         if ( this.bHeatExchange ) {
             //mol.resample_speed( this.temperature * 1.38 );
-            mol.resample_speed( this.temperature * 1.84, fracExchange );
+            mol.resample_speed( this.temperature * 1.84, 0.5*this.wallThermalConductivity );
             mol.resample_omega( this.temperature );
         }
         
